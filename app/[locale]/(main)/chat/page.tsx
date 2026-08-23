@@ -19,6 +19,7 @@ interface OnlineUser {
   avatar_url?: string
   online_at: string
   is_admin?: boolean
+  status?: 'online' | 'away' | 'dnd'
 }
 
 const QUICK_EMOJIS = ['😂', '❤️', '🔥', 'GG', '🎮', '💀', '👀']
@@ -35,6 +36,11 @@ export default function ChatPage() {
   const [newMessage, setNewMessage] = useState('')
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([])
   const [channel, setChannel] = useState<any>(null)
+  
+  // Profile & Status
+  const [userStatus, setUserStatus] = useState<'online' | 'away' | 'dnd'>('online')
+  const [showProfileModal, setShowProfileModal] = useState(false)
+  const [editAvatarUrl, setEditAvatarUrl] = useState('')
   
   const [chatSettings, setChatSettings] = useState<{ is_disabled: boolean, pinned_message: string | null }>({
     is_disabled: false,
@@ -109,7 +115,8 @@ export default function ChatPage() {
             username: presence.username, 
             avatar_url: presence.avatar_url,
             online_at: presence.online_at,
-            is_admin: presence.is_admin
+            is_admin: presence.is_admin,
+            status: presence.status || 'online'
           })
         }
         // sort by online_at, but put admins at the top
@@ -138,7 +145,8 @@ export default function ChatPage() {
             username: username,
             avatar_url: avatarUrl,
             online_at: new Date().toISOString(),
-            is_admin: isAdmin
+            is_admin: isAdmin,
+            status: userStatus
           })
         }
       })
@@ -148,7 +156,35 @@ export default function ChatPage() {
     return () => {
       chatChannel.unsubscribe()
     }
-  }, [isJoined, username, isAdmin])
+  }, [isJoined, username, isAdmin]) // Intentionally not tracking avatarUrl/userStatus here so it doesn't re-subscribe
+
+  const updateProfile = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setAvatarUrl(editAvatarUrl)
+    setShowProfileModal(false)
+    if (channel) {
+      await channel.track({
+        username: username,
+        avatar_url: editAvatarUrl,
+        online_at: new Date().toISOString(),
+        is_admin: isAdmin,
+        status: userStatus
+      })
+    }
+  }
+
+  const updateStatus = async (newStatus: 'online' | 'away' | 'dnd') => {
+    setUserStatus(newStatus)
+    if (channel) {
+      await channel.track({
+        username: username,
+        avatar_url: avatarUrl,
+        online_at: new Date().toISOString(),
+        is_admin: isAdmin,
+        status: newStatus
+      })
+    }
+  }
 
   const sendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
@@ -260,6 +296,7 @@ export default function ChatPage() {
   }
 
   return (
+    <>
     <div className="flex-1 flex flex-col md:flex-row h-[calc(100vh-8rem)] w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 gap-6">
       
       {/* Left Sidebar - Online Users */}
@@ -271,22 +308,40 @@ export default function ChatPage() {
           </h2>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-3 hide-scrollbar">
-          {onlineUsers.map((u, i) => (
-            <div key={i} className="flex items-center gap-3">
-              {u.avatar_url ? (
-                <img 
-                  src={u.avatar_url} 
-                  alt={u.username} 
-                  className="w-8 h-8 rounded-full object-cover flex-shrink-0 bg-bg-input"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/bottts/svg?seed=${u.username}`
-                  }}
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-bg-input flex items-center justify-center flex-shrink-0">
-                  <User className="w-4 h-4 text-text-muted" />
-                </div>
-              )}
+          {onlineUsers.map((u, i) => {
+            let statusColor = 'bg-twitch-green'
+            if (u.status === 'away') statusColor = 'bg-twitch-yellow'
+            if (u.status === 'dnd') statusColor = 'bg-twitch-pink'
+
+            return (
+            <div 
+              key={i} 
+              className={`flex items-center gap-3 ${u.username === username ? 'cursor-pointer hover:bg-white/5 p-1 -m-1 rounded-md transition-colors' : ''}`}
+              onClick={() => {
+                if (u.username === username) {
+                  setEditAvatarUrl(avatarUrl)
+                  setShowProfileModal(true)
+                }
+              }}
+              title={u.username === username ? "Modifier mon profil" : ""}
+            >
+              <div className="relative">
+                {u.avatar_url ? (
+                  <img 
+                    src={u.avatar_url} 
+                    alt={u.username} 
+                    className="w-8 h-8 rounded-full object-cover flex-shrink-0 bg-bg-input"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/bottts/svg?seed=${u.username}`
+                    }}
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-bg-input flex items-center justify-center flex-shrink-0">
+                    <User className="w-4 h-4 text-text-muted" />
+                  </div>
+                )}
+                <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-bg-secondary ${statusColor}`}></div>
+              </div>
               <div className="flex flex-col overflow-hidden">
                 <span className={`text-sm font-semibold truncate ${u.username === username ? 'text-twitch-purple' : 'text-text-primary'}`}>
                   {u.username}
@@ -298,7 +353,7 @@ export default function ChatPage() {
                 )}
               </div>
             </div>
-          ))}
+          )})}
         </div>
         
         {/* Admin Global Controls */}
@@ -453,5 +508,70 @@ export default function ChatPage() {
 
       </div>
     </div>
+    
+    {/* Profile Modal */}
+    {showProfileModal && (
+      <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="twitch-card bg-bg-secondary w-full max-w-sm p-6 relative border-t-4 border-twitch-purple"
+        >
+          <button 
+            onClick={() => setShowProfileModal(false)} 
+            className="absolute top-4 right-4 text-text-muted hover:text-white transition-colors"
+          >
+            <XCircle className="w-6 h-6" />
+          </button>
+          
+          <h3 className="text-xl font-bold text-white uppercase tracking-wider mb-6 flex items-center gap-2">
+            <User className="w-6 h-6 text-twitch-purple" /> Mon Profil
+          </h3>
+          
+          <div className="space-y-6">
+            {/* Status Selection */}
+            <div>
+              <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-3">Statut Actuel</label>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => updateStatus('online')} 
+                  className={`flex-1 py-2 rounded-md font-bold text-xs flex items-center justify-center gap-1.5 transition-colors ${userStatus === 'online' ? 'bg-twitch-green/20 text-twitch-green border border-twitch-green/50' : 'bg-bg-input text-text-muted hover:bg-white/10 hover:text-white'}`}
+                >
+                  <div className="w-2.5 h-2.5 rounded-full bg-twitch-green"></div> En ligne
+                </button>
+                <button 
+                  onClick={() => updateStatus('away')} 
+                  className={`flex-1 py-2 rounded-md font-bold text-xs flex items-center justify-center gap-1.5 transition-colors ${userStatus === 'away' ? 'bg-twitch-yellow/20 text-twitch-yellow border border-twitch-yellow/50' : 'bg-bg-input text-text-muted hover:bg-white/10 hover:text-white'}`}
+                >
+                  <div className="w-2.5 h-2.5 rounded-full bg-twitch-yellow"></div> Absent
+                </button>
+                <button 
+                  onClick={() => updateStatus('dnd')} 
+                  className={`flex-1 py-2 rounded-md font-bold text-xs flex items-center justify-center gap-1.5 transition-colors ${userStatus === 'dnd' ? 'bg-twitch-pink/20 text-twitch-pink border border-twitch-pink/50' : 'bg-bg-input text-text-muted hover:bg-white/10 hover:text-white'}`}
+                >
+                  <div className="w-2.5 h-2.5 rounded-full bg-twitch-pink"></div> Occupé
+                </button>
+              </div>
+            </div>
+
+            {/* Avatar Update Form */}
+            <form onSubmit={updateProfile}>
+              <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">URL d'Avatar</label>
+              <input 
+                type="url" 
+                value={editAvatarUrl} 
+                onChange={e => setEditAvatarUrl(e.target.value)} 
+                className="twitch-input mb-4" 
+                placeholder="https://..." 
+              />
+              <button type="submit" className="twitch-btn w-full py-2.5 text-sm">
+                Sauvegarder
+              </button>
+            </form>
+          </div>
+        </motion.div>
+      </div>
+    )}
+    </>
   )
 }
