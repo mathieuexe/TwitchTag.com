@@ -36,6 +36,35 @@ export default function PseudoGenerator() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const autoCheckAvailability = async (pseudo: string, index: number) => {
+    try {
+      const response = await fetch(
+        `/api/check-username?username=${encodeURIComponent(pseudo)}`
+      )
+      
+      if (!response.ok) {
+        throw new Error('Failed to check availability')
+      }
+
+      const data = await response.json()
+
+      setGeneratedPseudos((prev) =>
+        prev.map((p, i) =>
+          i === index
+            ? { ...p, available: data.available, checking: false }
+            : p
+        )
+      )
+    } catch (err) {
+      console.error('Error auto-checking availability:', err)
+      setGeneratedPseudos((prev) =>
+        prev.map((p, i) =>
+          i === index ? { ...p, checking: false } : p
+        )
+      )
+    }
+  }
+
   const handleGenerate = useCallback(async () => {
     setIsGenerating(true)
     setError(null)
@@ -55,13 +84,17 @@ export default function PseudoGenerator() {
 
       const data = await response.json()
       
-      setGeneratedPseudos(
-        data.pseudos.map((pseudo: string) => ({
-          pseudo,
-          available: null,
-          checking: false,
-        }))
-      )
+      const initialPseudos = data.pseudos.map((pseudo: string) => ({
+        pseudo,
+        available: null,
+        checking: true,
+      }))
+      setGeneratedPseudos(initialPseudos)
+      
+      // Auto-check availability in background
+      initialPseudos.forEach((item: GeneratedPseudo, index: number) => {
+        autoCheckAvailability(item.pseudo, index)
+      })
     } catch (err) {
       setError('Une erreur est survenue lors de la génération. Veuillez réessayer.')
       console.error('Error generating pseudos:', err)

@@ -53,78 +53,75 @@ export default function GeneratedList({
 
       {/* List */}
       <div className="divide-y-4 divide-[#303032]">
-        {pseudos.map((item, index) => (
-          <motion.div
-            key={`${item.pseudo}-${index}`}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.05 }}
-            className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-bg-tertiary transition-colors group"
-          >
-            <div className="flex items-center gap-4">
-              {/* Availability Box */}
-              <div
-                className={`w-8 h-8 border-2 border-black flex-shrink-0 ${
-                  item.available === null
-                    ? 'bg-[#303032]'
-                    : item.available
-                    ? 'bg-twitch-green shadow-brutal-sm'
-                    : 'bg-twitch-pink shadow-brutal-sm'
-                }`}
-              />
+        {pseudos.map((item, index) => {
+          let cardBg = 'hover:bg-bg-tertiary'
+          let statusBox = 'bg-[#303032]'
+          
+          if (item.available === true) {
+            cardBg = 'bg-twitch-green/10 hover:bg-twitch-green/20'
+            statusBox = 'bg-twitch-green shadow-brutal-sm'
+          } else if (item.available === false) {
+            cardBg = 'bg-twitch-pink/10 hover:bg-twitch-pink/20'
+            statusBox = 'bg-twitch-pink shadow-brutal-sm'
+          }
 
-              {/* Pseudo */}
-              <span className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight">
-                {item.pseudo}
-              </span>
-            </div>
+          return (
+            <motion.div
+              key={`${item.pseudo}-${index}`}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className={`p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors group ${cardBg}`}
+            >
+              <div className="flex items-center gap-4">
+                {/* Availability Box */}
+                <div
+                  className={`w-8 h-8 border-2 border-black flex-shrink-0 flex items-center justify-center ${statusBox}`}
+                >
+                  {item.checking && <Loader2 className="w-4 h-4 text-black animate-spin" />}
+                </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-3">
-              {/* Check Availability Button */}
-              <button
-                onClick={() => onCheckAvailability(index)}
-                disabled={item.checking}
-                className="w-12 h-12 flex items-center justify-center bg-twitch-cyan text-black border-2 border-black shadow-brutal-sm hover:-translate-y-1 hover:shadow-brutal transition-all disabled:opacity-50"
-                title="Vérifier sur Twitch"
-              >
-                {item.checking ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                ) : (
-                  <Search className="w-6 h-6" />
+                {/* Pseudo */}
+                <span className={`text-2xl sm:text-3xl font-black uppercase tracking-tight ${item.available === false ? 'text-text-muted line-through' : 'text-white'}`}>
+                  {item.pseudo}
+                </span>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-3">
+                {/* Copy Button (only if available or checking) */}
+                {item.available !== false && (
+                  <button
+                    onClick={() => handleCopy(item.pseudo, index)}
+                    className={`w-12 h-12 flex items-center justify-center border-2 border-black shadow-brutal-sm hover:-translate-y-1 hover:shadow-brutal transition-all ${
+                      copiedIndex === index
+                        ? 'bg-twitch-green text-black'
+                        : 'bg-twitch-yellow text-black'
+                    }`}
+                    title="Copier"
+                  >
+                    {copiedIndex === index ? (
+                      <Check className="w-6 h-6" />
+                    ) : (
+                      <Copy className="w-6 h-6" />
+                    )}
+                  </button>
                 )}
-              </button>
 
-              {/* Copy Button */}
-              <button
-                onClick={() => handleCopy(item.pseudo, index)}
-                className={`w-12 h-12 flex items-center justify-center border-2 border-black shadow-brutal-sm hover:-translate-y-1 hover:shadow-brutal transition-all ${
-                  copiedIndex === index
-                    ? 'bg-twitch-green text-black'
-                    : 'bg-twitch-yellow text-black'
-                }`}
-                title="Copier"
-              >
-                {copiedIndex === index ? (
-                  <Check className="w-6 h-6" />
-                ) : (
-                  <Copy className="w-6 h-6" />
-                )}
-              </button>
-
-              {/* Twitch Link */}
-              <a
-                href={`https://twitch.tv/${item.pseudo}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-12 h-12 flex items-center justify-center bg-twitch-purple text-white border-2 border-black shadow-brutal-sm hover:-translate-y-1 hover:shadow-brutal transition-all"
-                title="Voir sur Twitch"
-              >
-                <ExternalLink className="w-6 h-6" />
-              </a>
-            </div>
-          </motion.div>
-        ))}
+                {/* Twitch Link */}
+                <a
+                  href={`https://twitch.tv/${item.pseudo}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-12 h-12 flex items-center justify-center bg-twitch-purple text-white border-2 border-black shadow-brutal-sm hover:-translate-y-1 hover:shadow-brutal transition-all"
+                  title="Voir sur Twitch"
+                >
+                  <ExternalLink className="w-6 h-6" />
+                </a>
+              </div>
+            </motion.div>
+          )
+        })}
       </div>
     </div>
   )
