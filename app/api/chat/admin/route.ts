@@ -61,6 +61,34 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    else if (action === 'create_poll') {
+      const { question, options, pin_poll, username, avatar_url, name_color } = payload
+      
+      const pollData = {
+        question,
+        options: options.map((opt: string) => ({ text: opt, votes: 0 })),
+        voted_ips: []
+      }
+
+      // @ts-ignore
+      const { data, error } = await supabaseServer.from('chat_messages').insert({
+        username: username || 'Admin',
+        avatar_url: avatar_url || null,
+        content: `Sondage : ${question}`,
+        name_color: name_color || '#9146FF',
+        is_poll: true,
+        poll_data: pollData
+      } as any).select().single()
+
+      if (error) throw error
+
+      if (pin_poll) {
+        const updateData: any = { pinned_message: `Sondage : ${question}` }
+        // @ts-ignore
+        await supabaseServer.from('chat_settings').update(updateData).eq('id', 1)
+      }
+    }
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Admin Chat Action Error:', error)

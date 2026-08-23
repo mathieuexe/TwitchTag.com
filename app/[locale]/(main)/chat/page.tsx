@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabaseClient } from '@/lib/supabase/client'
-import { Send, Users, User, MessageSquare, Shield, Trash2, Ban, Lock, Unlock, Pin, XCircle } from 'lucide-react'
+import { Send, Users, User, MessageSquare, Shield, Trash2, Ban, Lock, Unlock, Pin, XCircle, BarChart2, Plus, Minus } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { getSession } from 'next-auth/react'
 
@@ -14,6 +14,12 @@ interface ChatMessage {
   created_at: string
   name_color?: string
   is_deleted?: boolean
+  is_poll?: boolean
+  poll_data?: {
+    question: string
+    options: { text: string, votes: number }[]
+    voted_ips: string[]
+  }
 }
 
 interface OnlineUser {
@@ -52,6 +58,12 @@ export default function ChatPage() {
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [editAvatarUrl, setEditAvatarUrl] = useState('')
   const [editNameColor, setEditNameColor] = useState('#9146FF')
+  
+  // Poll Modal
+  const [showPollModal, setShowPollModal] = useState(false)
+  const [pollQuestion, setPollQuestion] = useState('')
+  const [pollOptions, setPollOptions] = useState(['', ''])
+  const [pinPoll, setPinPoll] = useState(false)
   
   const [chatSettings, setChatSettings] = useState<{ is_disabled: boolean, pinned_message: string | null }>({
     is_disabled: false,
@@ -264,6 +276,39 @@ export default function ChatPage() {
     }
   }
 
+  const handleCreatePoll = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!pollQuestion.trim() || pollOptions.some(o => !o.trim())) return
+    
+    adminAction('create_poll', {
+      question: pollQuestion,
+      options: pollOptions.filter(o => o.trim()),
+      pin_poll: pinPoll,
+      username,
+      avatar_url: avatarUrl,
+      name_color: nameColor
+    })
+    
+    setShowPollModal(false)
+    setPollQuestion('')
+    setPollOptions(['', ''])
+    setPinPoll(false)
+  }
+
+  const handleVote = async (messageId: string, optionIndex: number) => {
+    try {
+      const res = await fetch('/api/chat/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message_id: messageId, option_index: optionIndex })
+      })
+      const data = await res.json()
+      if (!res.ok) alert(data.error)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   if (!isJoined) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-[calc(100vh-12rem)]">
@@ -432,6 +477,12 @@ export default function ChatPage() {
             >
               <Pin className="w-4 h-4" /> Épingler un message
             </button>
+            <button 
+              onClick={() => setShowPollModal(true)}
+              className="flex items-center gap-2 text-xs font-bold px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-md transition-colors w-full"
+            >
+              <BarChart2 className="w-4 h-4" /> Créer un sondage
+            </button>
           </div>
         )}
       </div>
@@ -517,9 +568,44 @@ export default function ChatPage() {
                 >
                   {msg.username}
                 </span>
-                <span className={`text-sm break-words flex-1 ${msg.is_deleted ? 'text-text-muted italic' : 'text-text-primary'}`}>
-                  {msg.content}
-                </span>
+
+                {msg.is_poll && msg.poll_data ? (
+                  <div className={`flex-1 ml-2 bg-bg-primary/50 border border-white/10 rounded-lg p-3 ${msg.is_deleted ? 'opacity-50' : ''}`}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <BarChart2 className="w-4 h-4 text-blue-400" />
+                      <span className="font-bold text-sm text-white">Sondage : {msg.poll_data.question}</span>
+                    </div>
+                    <div className="space-y-2">
+                      {msg.poll_data.options.map((opt, idx) => {
+                        const totalVotes = msg.poll_data!.options.reduce((sum, o) => sum + o.votes, 0)
+                        const percent = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0
+                        return (
+                          <div key={idx} className="relative overflow-hidden rounded-md bg-bg-input">
+                            <div 
+                              className="absolute inset-y-0 left-0 bg-blue-500/30 transition-all duration-500" 
+                              style={{ width: `${percent}%` }}
+                            />
+                            <button
+                              onClick={() => handleVote(msg.id, idx)}
+                              disabled={msg.is_deleted}
+                              className="relative w-full flex justify-between items-center px-3 py-2 text-xs font-semibold text-white hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <span>{opt.text}</span>
+                              <span className="text-text-muted">{percent}% ({opt.votes})</span>
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div className="mt-2 text-[10px] text-text-muted uppercase tracking-wider">
+                      {msg.poll_data.voted_ips?.length || 0} participant(s)
+                    </div>
+                  </div>
+                ) : (
+                  <span className={`text-sm break-words flex-1 ${msg.is_deleted ? 'text-text-muted italic' : 'text-text-primary'}`}>
+                    {msg.content}
+                  </span>
+                )}
                 
                 {/* Admin Message Controls */}
                 {(isAdmin && !msg.is_deleted) && (
@@ -589,6 +675,99 @@ export default function ChatPage() {
       </div>
     </div>
     
+    {/* Poll Modal */}
+    {showPollModal && (
+      <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="twitch-card bg-bg-secondary w-full max-w-sm p-6 relative border-t-4 border-blue-500"
+        >
+          <button 
+            onClick={() => setShowPollModal(false)} 
+            className="absolute top-4 right-4 text-text-muted hover:text-white transition-colors"
+          >
+            <XCircle className="w-6 h-6" />
+          </button>
+          
+          <h3 className="text-xl font-bold text-white uppercase tracking-wider mb-6 flex items-center gap-2">
+            <BarChart2 className="w-6 h-6 text-blue-500" /> Nouveau Sondage
+          </h3>
+
+          <form onSubmit={handleCreatePoll} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Question</label>
+              <input
+                type="text"
+                value={pollQuestion}
+                onChange={e => setPollQuestion(e.target.value)}
+                className="twitch-input"
+                placeholder="Ex: Quel jeu ce soir ?"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Options</label>
+              <div className="space-y-2">
+                {pollOptions.map((opt, idx) => (
+                  <div key={idx} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={opt}
+                      onChange={e => {
+                        const newOpts = [...pollOptions]
+                        newOpts[idx] = e.target.value
+                        setPollOptions(newOpts)
+                      }}
+                      className="twitch-input flex-1"
+                      placeholder={`Option ${idx + 1}`}
+                      required
+                    />
+                    {pollOptions.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))}
+                        className="px-2 bg-red-500/20 text-red-500 rounded hover:bg-red-500/30 transition-colors"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {pollOptions.length < 5 && (
+                <button
+                  type="button"
+                  onClick={() => setPollOptions([...pollOptions, ''])}
+                  className="mt-2 text-xs font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+                >
+                  <Plus className="w-3 h-3" /> Ajouter une option
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <input
+                type="checkbox"
+                id="pinPoll"
+                checked={pinPoll}
+                onChange={e => setPinPoll(e.target.checked)}
+                className="w-4 h-4 rounded bg-bg-input border-white/10 text-twitch-purple focus:ring-twitch-purple focus:ring-offset-bg-secondary"
+              />
+              <label htmlFor="pinPoll" className="text-sm font-semibold text-text-secondary cursor-pointer">
+                Épingler le sondage
+              </label>
+            </div>
+
+            <button type="submit" className="w-full twitch-btn bg-blue-500 hover:bg-blue-600 py-2.5 text-sm mt-4">
+              Créer le sondage
+            </button>
+          </form>
+        </motion.div>
+      </div>
+    )}
+
     {/* Profile Modal */}
     {showProfileModal && (
       <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
