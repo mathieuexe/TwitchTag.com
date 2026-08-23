@@ -73,6 +73,24 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     username TEXT NOT NULL,
     avatar_url TEXT,
     content TEXT NOT NULL,
+    ip_address TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Table: chat_settings (Paramètres du chat)
+CREATE TABLE IF NOT EXISTS chat_settings (
+    id INT PRIMARY KEY DEFAULT 1,
+    is_disabled BOOLEAN DEFAULT false,
+    pinned_message TEXT,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Table: chat_bans (Bannissements du chat)
+CREATE TABLE IF NOT EXISTS chat_bans (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    ip_address TEXT NOT NULL,
+    username TEXT,
+    reason TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -128,6 +146,18 @@ DO $$ BEGIN
     CREATE POLICY "Enable read for all users" ON chat_messages FOR SELECT USING (true);
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- Politiques pour chat_settings
+ALTER TABLE chat_settings ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+    CREATE POLICY "Enable read for all users" ON chat_settings FOR SELECT USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- Politiques pour chat_bans
+ALTER TABLE chat_bans ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+    CREATE POLICY "Enable read for all users" ON chat_bans FOR SELECT USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 
 -- 3. INITIAL DATA (SEED)
 -- ==========================================
@@ -145,11 +175,13 @@ VALUES (
 -- 4. FUNCTIONS & TRIGGERS
 -- ==========================================
 
--- Activer le mode Temps Réel pour la table chat_messages
--- Ceci permet à Supabase de diffuser les messages aux clients via les websockets
+-- Création de la ligne par défaut pour chat_settings
+INSERT INTO chat_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
+-- Activer le mode Temps Réel
 BEGIN;
   DROP PUBLICATION IF EXISTS supabase_realtime;
-  CREATE PUBLICATION supabase_realtime FOR TABLE chat_messages;
+  CREATE PUBLICATION supabase_realtime FOR TABLE chat_messages, chat_settings;
 COMMIT;
 
 -- Fonction pour mettre à jour 'updated_at'

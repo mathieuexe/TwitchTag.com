@@ -11,13 +11,14 @@ import {
   Twitch
 } from 'lucide-react'
 import LogoutButton from '@/components/admin/LogoutButton'
+import { authOptions } from '@/lib/auth'
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const session = await getServerSession()
+  const session = await getServerSession(authOptions)
 
   if (!session) {
     redirect('/admin/login')

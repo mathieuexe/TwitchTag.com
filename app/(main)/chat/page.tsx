@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabaseClient } from '@/lib/supabase/client'
-import { Send, Users, User, MessageSquare } from 'lucide-react'
+import { Send, Users, User, MessageSquare, Shield, Trash2, Ban, Lock, Unlock, Pin, XCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { getSession } from 'next-auth/react'
 
 interface ChatMessage {
   id: string
@@ -17,11 +18,13 @@ interface OnlineUser {
   username: string
   avatar_url?: string
   online_at: string
+  is_admin?: boolean
 }
 
 const QUICK_EMOJIS = ['😂', '❤️', '🔥', 'GG', '🎮', '💀', '👀']
 
 export default function ChatPage() {
+  const [isAdmin, setIsAdmin] = useState(false)
   const [isJoined, setIsJoined] = useState(false)
   const [usernameInput, setUsernameInput] = useState('')
   const [avatarUrlInput, setAvatarUrlInput] = useState('')
@@ -33,7 +36,20 @@ export default function ChatPage() {
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([])
   const [channel, setChannel] = useState<any>(null)
   
+  const [chatSettings, setChatSettings] = useState<{ is_disabled: boolean, pinned_message: string | null }>({
+    is_disabled: false,
+    pinned_message: null
+  })
+  
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const session = await getSession()
+      if (session) setIsAdmin(true)
+    }
+    checkAdmin()
+  }, [])
 
   // Scroll to bottom when messages update
   useEffect(() => {
@@ -54,19 +70,26 @@ export default function ChatPage() {
   useEffect(() => {
     if (!isJoined || !username) return
 
-    // Load initial messages
-    const loadMessages = async () => {
-      const { data } = await supabaseClient
+    const loadInitialData = async () => {
+      // Load initial messages
+      const { data: msgs } = await supabaseClient
         .from('chat_messages')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50)
       
-      if (data) {
-        setMessages(data.reverse())
-      }
+      if (msgs) setMessages(msgs.reverse())
+
+      // Load chat settings
+      const { data: settings } = await supabaseClient
+        .from('chat_settings')
+        .select('*')
+        .eq('id', 1)
+        .single()
+      
+      if (settings) setChatSettings({ is_disabled: settings.is_disabled, pinned_message: settings.pinned_message })
     }
-    loadMessages()
+    loadInitialData()
 
     // Setup Realtime Channel for Presence & Messages
     const chatChannel = supabaseClient.channel('public:chat_room')
@@ -76,20 +99,33 @@ export default function ChatPage() {
         const presenceState = chatChannel.presenceState()
         const users: OnlineUser[] = []
         for (const id in presenceState) {
-          // get the first presence instance for each user id
           const presence = presenceState[id][0] as any
           users.push({ 
             username: presence.username, 
             avatar_url: presence.avatar_url,
-            online_at: presence.online_at 
+            online_at: presence.online_at,
+            is_admin: presence.is_admin
           })
         }
-        // sort by online_at
-        users.sort((a, b) => new Date(b.online_at).getTime() - new Date(a.online_at).getTime())
+        // sort by online_at, but put admins at the top
+        users.sort((a, b) => {
+          if (a.is_admin && !b.is_admin) return -1
+          if (!a.is_admin && b.is_admin) return 1
+          return new Date(b.online_at).getTime() - new Date(a.online_at).getTime()
+        })
         setOnlineUsers(users)
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
         setMessages((prev) => [...prev, payload.new as ChatMessage])
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chat_messages' }, (payload) => {
+        setMessages((prev) => prev.filter(m => m.id !== payload.old.id))
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chat_settings' }, (payload) => {
+        setChatSettings({
+          is_disabled: payload.new.is_disabled,
+          pinned_message: payload.new.pinned_message
+        })
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
@@ -97,6 +133,7 @@ export default function ChatPage() {
             username: username,
             avatar_url: avatarUrl,
             online_at: new Date().toISOString(),
+            is_admin: isAdmin
           })
         }
       })
@@ -106,26 +143,51 @@ export default function ChatPage() {
     return () => {
       chatChannel.unsubscribe()
     }
-  }, [isJoined, username])
+  }, [isJoined, username, isAdmin])
 
   const sendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     
+    if (chatSettings.is_disabled && !isAdmin) return
+
     const content = newMessage.trim()
     if (!content) return
 
-    // Optimistic UI could be added here, but we'll wait for server to ensure order
     setNewMessage('')
     
-    await supabaseClient.from('chat_messages').insert({
-      username,
-      avatar_url: avatarUrl || null,
-      content
-    })
+    // We call our API route to send message securely
+    try {
+      const res = await fetch('/api/chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, avatar_url: avatarUrl || null, content })
+      })
+      
+      const data = await res.json()
+      if (!res.ok) {
+        alert(data.error || "Erreur lors de l'envoi")
+      }
+    } catch (err) {
+      console.error(err)
+    }
   }
 
   const addEmoji = (emoji: string) => {
     setNewMessage(prev => prev + (prev.length > 0 && !prev.endsWith(' ') ? ' ' : '') + emoji)
+  }
+
+  const adminAction = async (action: string, payload: any = {}) => {
+    try {
+      const res = await fetch('/api/chat/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, payload })
+      })
+      if (!res.ok) throw new Error('Action failed')
+    } catch (error) {
+      console.error(error)
+      alert("Erreur lors de l'action admin")
+    }
   }
 
   if (!isJoined) {
@@ -146,6 +208,11 @@ export default function ChatPage() {
             <p className="text-text-muted mt-2 text-sm">
               Connecte-toi avec un pseudo pour discuter avec la communauté.
             </p>
+            {isAdmin && (
+              <div className="mt-4 inline-flex items-center gap-2 bg-red-500/20 text-red-500 px-3 py-1 rounded-md text-sm font-bold border border-red-500/30">
+                <Shield className="w-4 h-4" /> Mode Administrateur
+              </div>
+            )}
           </div>
 
           <form onSubmit={handleJoin} className="space-y-4">
@@ -191,7 +258,7 @@ export default function ChatPage() {
     <div className="flex-1 flex flex-col md:flex-row h-[calc(100vh-8rem)] w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 gap-6">
       
       {/* Left Sidebar - Online Users */}
-      <div className="hidden md:flex flex-col w-64 twitch-card bg-bg-secondary overflow-hidden">
+      <div className="hidden md:flex flex-col w-64 twitch-card bg-bg-secondary overflow-hidden flex-shrink-0">
         <div className="p-4 border-b border-white/5 flex items-center gap-2">
           <Users className="w-5 h-5 text-twitch-purple" />
           <h2 className="font-bold text-white uppercase tracking-wider text-sm">
@@ -215,12 +282,51 @@ export default function ChatPage() {
                   <User className="w-4 h-4 text-text-muted" />
                 </div>
               )}
-              <span className={`text-sm font-semibold truncate ${u.username === username ? 'text-twitch-purple' : 'text-text-primary'}`}>
-                {u.username}
-              </span>
+              <div className="flex flex-col overflow-hidden">
+                <span className={`text-sm font-semibold truncate ${u.username === username ? 'text-twitch-purple' : 'text-text-primary'}`}>
+                  {u.username}
+                </span>
+                {u.is_admin && (
+                  <span className="text-[10px] font-bold text-red-500 uppercase flex items-center gap-1">
+                    <Shield className="w-3 h-3" /> Admin
+                  </span>
+                )}
+              </div>
             </div>
           ))}
         </div>
+        
+        {/* Admin Global Controls */}
+        {isAdmin && (
+          <div className="p-4 border-t border-white/5 bg-bg-primary/30 flex flex-col gap-2">
+            <button 
+              onClick={() => adminAction('toggle_chat', { is_disabled: !chatSettings.is_disabled })}
+              className="flex items-center gap-2 text-xs font-bold px-3 py-2 bg-bg-input hover:bg-white/10 rounded-md transition-colors w-full"
+            >
+              {chatSettings.is_disabled ? <Unlock className="w-4 h-4 text-green-400" /> : <Lock className="w-4 h-4 text-red-400" />}
+              {chatSettings.is_disabled ? 'Activer le chat' : 'Désactiver le chat'}
+            </button>
+            <button 
+              onClick={() => {
+                if(confirm('Es-tu sûr de vouloir effacer tout le chat ?')) {
+                  adminAction('clear_chat')
+                }
+              }}
+              className="flex items-center gap-2 text-xs font-bold px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-md transition-colors w-full"
+            >
+              <Trash2 className="w-4 h-4" /> Clear le chat
+            </button>
+            <button 
+              onClick={() => {
+                const msg = prompt('Message à épingler ? (Laisser vide pour désépingler)')
+                adminAction('pin_message', { message: msg || null })
+              }}
+              className="flex items-center gap-2 text-xs font-bold px-3 py-2 bg-twitch-purple/10 hover:bg-twitch-purple/20 text-twitch-purple rounded-md transition-colors w-full"
+            >
+              <Pin className="w-4 h-4" /> Épingler un message
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Main Chat Area */}
@@ -231,6 +337,22 @@ export default function ChatPage() {
           <Users className="w-4 h-4" />
           {onlineUsers.length} membre(s) en ligne
         </div>
+
+        {/* Pinned Message */}
+        {chatSettings.pinned_message && (
+          <div className="bg-twitch-purple/10 border-b border-twitch-purple/30 p-3 flex items-start gap-3">
+            <Pin className="w-5 h-5 text-twitch-purple mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <span className="text-xs font-bold text-twitch-purple uppercase tracking-wider block mb-0.5">Message Épinglé</span>
+              <p className="text-sm text-white font-medium break-words">{chatSettings.pinned_message}</p>
+            </div>
+            {isAdmin && (
+              <button onClick={() => adminAction('pin_message', { message: null })} className="text-text-muted hover:text-white transition-colors">
+                <XCircle className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 hide-scrollbar">
@@ -255,9 +377,32 @@ export default function ChatPage() {
                 <span className={`font-bold text-sm ${msg.username === username ? 'text-twitch-purple' : 'text-white'}`}>
                   {msg.username}
                 </span>
-                <span className="text-text-primary text-sm break-words">
+                <span className="text-text-primary text-sm break-words flex-1">
                   {msg.content}
                 </span>
+                
+                {/* Admin Message Controls */}
+                {isAdmin && (
+                  <div className="hidden group-hover:flex items-center gap-1 bg-bg-primary rounded px-1 ml-2">
+                    <button 
+                      onClick={() => adminAction('delete_message', { id: msg.id })}
+                      className="p-1 text-text-muted hover:text-red-400 transition-colors"
+                      title="Supprimer le message"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        const reason = prompt(`Raison du ban pour ${msg.username} ?`)
+                        if(reason !== null) adminAction('ban_user', { message_id: msg.id, reason })
+                      }}
+                      className="p-1 text-text-muted hover:text-red-400 transition-colors"
+                      title="Bannir l'utilisateur (IP)"
+                    >
+                      <Ban className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -268,11 +413,12 @@ export default function ChatPage() {
         <div className="p-4 border-t border-white/5 bg-bg-primary/50">
           
           {/* Quick Emojis */}
-          <div className="flex gap-2 mb-3 overflow-x-auto hide-scrollbar pb-1">
+          <div className={`flex gap-2 mb-3 overflow-x-auto hide-scrollbar pb-1 ${(chatSettings.is_disabled && !isAdmin) ? 'opacity-50 pointer-events-none' : ''}`}>
             {QUICK_EMOJIS.map((emoji) => (
               <button
                 key={emoji}
                 onClick={() => addEmoji(emoji)}
+                disabled={chatSettings.is_disabled && !isAdmin}
                 className="flex-shrink-0 px-3 py-1.5 bg-bg-input hover:bg-white/10 rounded-md text-lg transition-colors"
               >
                 {emoji}
@@ -285,13 +431,14 @@ export default function ChatPage() {
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Envoyer un message..."
-              className="twitch-input flex-1"
+              placeholder={chatSettings.is_disabled && !isAdmin ? "Le chat est temporairement désactivé." : "Envoyer un message..."}
+              className="twitch-input flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
               maxLength={200}
+              disabled={chatSettings.is_disabled && !isAdmin}
             />
             <button
               type="submit"
-              disabled={!newMessage.trim()}
+              disabled={(!newMessage.trim()) || (chatSettings.is_disabled && !isAdmin)}
               className="twitch-btn px-6 disabled:opacity-50"
             >
               <Send className="w-5 h-5" />
