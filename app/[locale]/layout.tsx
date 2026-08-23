@@ -71,6 +71,7 @@ export const metadata: Metadata = {
 
 import {NextIntlClientProvider} from 'next-intl';
 import {getMessages} from 'next-intl/server';
+import GlobalAnnouncements from '@/components/layout/GlobalAnnouncements';
 
 export default async function RootLayout({
   children,
@@ -87,6 +88,7 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <NextAuthProvider>
             {children}
+            <GlobalAnnouncements />
           </NextAuthProvider>
         </NextIntlClientProvider>
       </body>
