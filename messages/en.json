@@ -1,0 +1,43 @@
+{
+  "Header": {
+    "home": "WELCOME",
+    "verifier": "VERIFIER",
+    "donation": "DONATION",
+    "chat": "LIVE CHAT",
+    "login": "Log in",
+    "admin": "ADMIN",
+    "admin_mobile": "Admin Dashboard"
+  },
+  "PseudoGenerator": {
+    "error": "An error occurred during generation. Please try again.",
+    "ready": "Ready to generate?",
+    "ready_desc": "Configure your options on the left and click \"Generate\" to get your nicknames."
+  },
+  "PseudoOptions": {
+    "title": "Options",
+    "keywords": "Keywords (Optional)",
+    "keywords_placeholder": "Examples: ninja, dark, pro...",
+    "numbers": "Include numbers",
+    "special_chars": "Special characters (-_)",
+    "easy_to_remember": "Easy to remember",
+    "length": "Username length",
+    "chars": "characters",
+    "generate_btn": "Generate",
+    "generating": "GENERATION..."
+  },
+  "LiveCounters": {
+    "visitors_total": "Visitors (Total)",
+    "pseudos_total": "Usernames (Total)",
+    "visitors_month": "Visitors (Month)",
+    "pseudos_month": "Usernames (Month)"
+  },
+  "Donation": {
+    "title": "Support TwitchTag",
+    "desc": "100% free, ad-free, made with love. Your support helps pay for the servers and keep the tool online.",
+    "choose_amount": "Choose your amount",
+    "custom_amount": "Custom amount",
+    "custom_placeholder": "Another amount...",
+    "validate": "Confirm the donation of",
+    "secure": "100% secure payment via Stripe"
+  }
+}

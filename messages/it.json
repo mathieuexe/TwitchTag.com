@@ -1,0 +1,43 @@
+{
+  "Header": {
+    "home": "BENVENUTO",
+    "verifier": "VERIFICATORE",
+    "donation": "DONAZIONE",
+    "chat": "CHAT IN DIRETTA",
+    "login": "Login",
+    "admin": "AMMINISTRATORE",
+    "admin_mobile": "Pannello di amministrazione"
+  },
+  "PseudoGenerator": {
+    "error": "Si è verificato un errore durante la generazione. Riprova.",
+    "ready": "Pronti a generare?",
+    "ready_desc": "Configura le tue opzioni a sinistra e clicca su \"Genera\" per ottenere i tuoi nickname."
+  },
+  "PseudoOptions": {
+    "title": "Opzioni",
+    "keywords": "Parole chiave (facoltative)",
+    "keywords_placeholder": "Esempi: ninja, oscuro, pro...",
+    "numbers": "Includi i numeri",
+    "special_chars": "Caratteri speciali (-_)",
+    "easy_to_remember": "Facile da ricordare",
+    "length": "lunghezza del nome utente",
+    "chars": "caratteri",
+    "generate_btn": "Generare",
+    "generating": "GENERAZIONE..."
+  },
+  "LiveCounters": {
+    "visitors_total": "Visitatori (Totale)",
+    "pseudos_total": "Nomi utente (Totale)",
+    "visitors_month": "Visitatori (mese)",
+    "pseudos_month": "Nomi utente (Mese)"
+  },
+  "Donation": {
+    "title": "Supporto TwitchTag",
+    "desc": "Completamente gratuito, senza pubblicità, creato con amore. Il tuo supporto contribuisce a coprire i costi dei server e a mantenere lo strumento online.",
+    "choose_amount": "Scegli il tuo importo",
+    "custom_amount": "Importo personalizzato",
+    "custom_placeholder": "Un altro importo...",
+    "validate": "Conferma la donazione di",
+    "secure": "Pagamento sicuro al 100% tramite Stripe"
+  }
+}

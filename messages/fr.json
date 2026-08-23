@@ -1,0 +1,43 @@
+{
+  "Header": {
+    "home": "ACCUEIL",
+    "verifier": "VÉRIFICATEUR",
+    "donation": "DONATION",
+    "chat": "CHAT EN DIRECT",
+    "login": "Se connecter",
+    "admin": "ADMIN",
+    "admin_mobile": "Tableau de bord Admin"
+  },
+  "PseudoGenerator": {
+    "error": "Une erreur est survenue lors de la génération. Veuillez réessayer.",
+    "ready": "Prêt à générer ?",
+    "ready_desc": "Configure tes options à gauche et clique sur \"Générer\" pour obtenir tes pseudos."
+  },
+  "PseudoOptions": {
+    "title": "Options",
+    "keywords": "Mots-clés (Optionnel)",
+    "keywords_placeholder": "Ex: ninja, dark, pro...",
+    "numbers": "Inclure des chiffres",
+    "special_chars": "Caractères spéciaux (-_)",
+    "easy_to_remember": "Facile à retenir",
+    "length": "Longueur du pseudo",
+    "chars": "caractères",
+    "generate_btn": "Générer",
+    "generating": "GÉNÉRATION..."
+  },
+  "LiveCounters": {
+    "visitors_total": "Visiteurs (Total)",
+    "pseudos_total": "Pseudos (Total)",
+    "visitors_month": "Visiteurs (Mois)",
+    "pseudos_month": "Pseudos (Mois)"
+  },
+  "Donation": {
+    "title": "Soutenez TwitchTag",
+    "desc": "100% gratuit, sans pub, fait avec amour. Votre soutien permet de payer les serveurs et de garder l'outil en ligne.",
+    "choose_amount": "Choisis ton montant",
+    "custom_amount": "Montant personnalisé",
+    "custom_placeholder": "Autre montant...",
+    "validate": "Valider le don de",
+    "secure": "Paiement 100% sécurisé via Stripe"
+  }
+}

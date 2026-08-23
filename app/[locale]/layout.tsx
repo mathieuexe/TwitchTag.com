@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Space_Grotesk, Inter, Space_Mono } from 'next/font/google'
-import './globals.css'
+import '../globals.css'
 import NextAuthProvider from '@/components/providers/NextAuthProvider'
 
 // We use Space Grotesk as it closely resembles the blocky, geometric nature of Twitch's Roobert font
@@ -69,17 +69,26 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+import {NextIntlClientProvider} from 'next-intl';
+import {getMessages} from 'next-intl/server';
+
+export default async function RootLayout({
   children,
+  params: {locale}
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
+  params: {locale: string};
 }) {
+  const messages = await getMessages();
+
   return (
-    <html lang="fr" className={`${spaceGrotesk.variable} ${inter.variable} ${spaceMono.variable}`}>
+    <html lang={locale} className={`${spaceGrotesk.variable} ${inter.variable} ${spaceMono.variable}`}>
       <body className="min-h-screen bg-bg-primary font-sans antialiased selection:bg-twitch-yellow selection:text-black">
-        <NextAuthProvider>
-          {children}
-        </NextAuthProvider>
+        <NextIntlClientProvider messages={messages}>
+          <NextAuthProvider>
+            {children}
+          </NextAuthProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   )

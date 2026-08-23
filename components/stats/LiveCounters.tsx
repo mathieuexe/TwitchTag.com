@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { Users, Sparkles, Calendar, Activity } from 'lucide-react'
 import { trackVisit } from '@/lib/utils/stats'
 
+import { useTranslations } from 'next-intl'
+
 interface Stats {
   totalPseudos: number
   totalVisits: number
@@ -12,6 +14,7 @@ interface Stats {
 }
 
 export default function LiveCounters() {
+  const t = useTranslations('LiveCounters')
   const [stats, setStats] = useState<Stats>({
     totalPseudos: 0,
     totalVisits: 0,
@@ -39,10 +42,10 @@ export default function LiveCounters() {
   }, [])
 
   const statItems = [
-    { label: 'Visiteurs (Total)', value: stats.totalVisits || 0, icon: Users, color: 'text-twitch-purple' },
-    { label: 'Pseudos (Total)', value: stats.totalPseudos || 0, icon: Sparkles, color: 'text-twitch-purple' },
-    { label: 'Visiteurs (Mois)', value: stats.monthlyVisits || 0, icon: Calendar, color: 'text-twitch-purple' },
-    { label: 'Pseudos (Mois)', value: stats.monthlyPseudos || 0, icon: Activity, color: 'text-twitch-purple' },
+    { label: t('visitors_total'), value: stats.totalVisits || 0, icon: Users, color: 'text-twitch-purple' },
+    { label: t('pseudos_total'), value: stats.totalPseudos || 0, icon: Sparkles, color: 'text-twitch-purple' },
+    { label: t('visitors_month'), value: stats.monthlyVisits || 0, icon: Calendar, color: 'text-twitch-purple' },
+    { label: t('pseudos_month'), value: stats.monthlyPseudos || 0, icon: Activity, color: 'text-twitch-purple' },
   ]
 
   return (

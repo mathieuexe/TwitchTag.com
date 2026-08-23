@@ -1,0 +1,43 @@
+{
+  "Header": {
+    "home": "BIENVENIDO",
+    "verifier": "VERIFICADOR",
+    "donation": "DONACIÓN",
+    "chat": "CHAT EN VIVO",
+    "login": "Acceso",
+    "admin": "ADMINISTRACIÓN",
+    "admin_mobile": "Panel de administración"
+  },
+  "PseudoGenerator": {
+    "error": "Se produjo un error durante la generación. Inténtalo de nuevo.",
+    "ready": "¿Listo para generar?",
+    "ready_desc": "Configura tus opciones a la izquierda y haz clic en \"Generar\" para obtener tus apodos."
+  },
+  "PseudoOptions": {
+    "title": "Opciones",
+    "keywords": "Palabras clave (opcional)",
+    "keywords_placeholder": "Ejemplos: ninja, oscuro, pro...",
+    "numbers": "Incluir números",
+    "special_chars": "Caracteres especiales (-_)",
+    "easy_to_remember": "Fácil de recordar",
+    "length": "longitud del nombre de usuario",
+    "chars": "personajes",
+    "generate_btn": "Generar",
+    "generating": "GENERACIÓN..."
+  },
+  "LiveCounters": {
+    "visitors_total": "Visitantes (Total)",
+    "pseudos_total": "Nombres de usuario (total)",
+    "visitors_month": "Visitantes (Mes)",
+    "pseudos_month": "Nombres de usuario (Mes)"
+  },
+  "Donation": {
+    "title": "Apoya a TwitchTag",
+    "desc": "100% gratis, sin anuncios, hecho con cariño. Tu apoyo ayuda a pagar los servidores y a mantener la herramienta en línea.",
+    "choose_amount": "Elige tu cantidad",
+    "custom_amount": "Cantidad personalizada",
+    "custom_placeholder": "Otra cantidad...",
+    "validate": "Confirmar la donación de",
+    "secure": "Pago 100% seguro a través de Stripe."
+  }
+}

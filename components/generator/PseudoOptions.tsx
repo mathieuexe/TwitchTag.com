@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Sliders, Sparkles, Hash, AtSign, Brain, Plus, X, RefreshCw, Search, Twitch } from 'lucide-react'
 
+import { useTranslations } from 'next-intl'
+
 interface GenerateOptions {
   keywords: string[]
   includeNumbers: boolean
@@ -26,6 +28,7 @@ export default function PseudoOptions({
   onGenerate,
   isGenerating,
 }: PseudoOptionsProps) {
+  const t = useTranslations('PseudoOptions')
   const [keywordInput, setKeywordInput] = useState('')
 
   const addKeyword = () => {
@@ -76,7 +79,7 @@ export default function PseudoOptions({
             value={keywordInput}
             onChange={(e) => setKeywordInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Entrez vos préférences (ex: action, cool)..."
+            placeholder={t('keywords_placeholder')}
             className="twitch-input pl-10 bg-[#1f1f23] hover:bg-white/5"
           />
         </div>
@@ -109,19 +112,19 @@ export default function PseudoOptions({
                 onClick={() => onChange({ ...options, includeNumbers: !options.includeNumbers })}
                 className={`text-sm font-semibold transition-colors ${options.includeNumbers ? 'text-white' : 'text-text-muted hover:text-white/80'}`}
               >
-                Nombres
+                {t('numbers')}
               </button>
               <button
                 onClick={() => onChange({ ...options, includeSpecialChars: !options.includeSpecialChars })}
                 className={`text-sm font-semibold transition-colors ${options.includeSpecialChars ? 'text-white' : 'text-text-muted hover:text-white/80'}`}
               >
-                Symboles
+                {t('special_chars')}
               </button>
               <button
                 onClick={() => onChange({ ...options, easyToRemember: !options.easyToRemember })}
                 className={`text-sm font-semibold transition-colors ${options.easyToRemember ? 'text-white' : 'text-text-muted hover:text-white/80'}`}
               >
-                Mémorable
+                {t('easy_to_remember')}
               </button>
             </div>
           </div>

@@ -5,6 +5,8 @@ import { motion } from 'framer-motion'
 import { Heart, Gift, Zap, Star, Coffee, Crown, ArrowRight, Loader2, Check, Shield } from 'lucide-react'
 import Header from '@/components/layout/Header'
 
+import { useTranslations } from 'next-intl'
+
 const DONATION_AMOUNTS = [
   { amount: 2, icon: Coffee, label: 'Un café', color: 'bg-twitch-cyan' },
   { amount: 5, icon: Gift, label: 'Un cadeau', color: 'bg-twitch-pink' },
@@ -12,6 +14,7 @@ const DONATION_AMOUNTS = [
 ]
 
 export default function DonationPage() {
+  const t = useTranslations('Donation')
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null)
   const [customAmount, setCustomAmount] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -50,10 +53,10 @@ export default function DonationPage() {
             <Heart className="w-10 h-10 text-white fill-current" />
           </div>
           <h1 className="text-4xl sm:text-6xl font-black text-white uppercase tracking-tighter mb-4 inline-block border-b-8 border-twitch-purple pb-2">
-            Soutenez <span className="text-twitch-purple">TwitchTag</span>
+            {t('title')}
           </h1>
           <p className="text-text-secondary text-xl font-medium max-w-2xl mx-auto mt-6">
-            100% gratuit, sans pub, fait avec amour. Votre soutien permet de payer les serveurs et de garder l'outil en ligne.
+            {t('desc')}
           </p>
         </div>
 
@@ -61,7 +64,7 @@ export default function DonationPage() {
           {/* Left Col - Options */}
           <div className="space-y-8">
             <h2 className="text-xl font-bold text-white uppercase tracking-wider mb-6">
-              Choisis ton montant
+              {t('choose_amount')}
             </h2>
             
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

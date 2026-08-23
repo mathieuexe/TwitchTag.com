@@ -1,0 +1,43 @@
+{
+  "Header": {
+    "home": "WILLKOMMEN",
+    "verifier": "Prüfer",
+    "donation": "SPENDE",
+    "chat": "LIVE-CHAT",
+    "login": "Einloggen",
+    "admin": "ADMIN",
+    "admin_mobile": "Admin-Dashboard"
+  },
+  "PseudoGenerator": {
+    "error": "Bei der Generierung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "ready": "Bereit zur Generierung?",
+    "ready_desc": "Konfigurieren Sie Ihre Optionen auf der linken Seite und klicken Sie auf „Generieren“, um Ihre Spitznamen zu erhalten."
+  },
+  "PseudoOptions": {
+    "title": "Optionen",
+    "keywords": "Schlüsselwörter (optional)",
+    "keywords_placeholder": "Beispiele: Ninja, Dunkel, Profi...",
+    "numbers": "Zahlen einschließen",
+    "special_chars": "Sonderzeichen (-_)",
+    "easy_to_remember": "Leicht zu merken",
+    "length": "Benutzernamelänge",
+    "chars": "Charaktere",
+    "generate_btn": "Erzeugen",
+    "generating": "GENERATION..."
+  },
+  "LiveCounters": {
+    "visitors_total": "Besucher (gesamt)",
+    "pseudos_total": "Benutzernamen (gesamt)",
+    "visitors_month": "Besucher (Monat)",
+    "pseudos_month": "Benutzernamen (Monat)"
+  },
+  "Donation": {
+    "title": "Unterstütze TwitchTag",
+    "desc": "100 % kostenlos, werbefrei, mit Liebe entwickelt. Ihre Unterstützung hilft, die Serverkosten zu decken und das Tool online zu halten.",
+    "choose_amount": "Wählen Sie Ihren Betrag.",
+    "custom_amount": "Benutzerdefinierter Betrag",
+    "custom_placeholder": "Ein weiterer Betrag...",
+    "validate": "Bestätigen Sie die Spende von",
+    "secure": "100% sichere Zahlung über Stripe"
+  }
+}

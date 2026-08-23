@@ -30,7 +30,10 @@ const DEFAULT_OPTIONS: GenerateOptions = {
   count: 10,
 }
 
+import { useTranslations } from 'next-intl'
+
 export default function PseudoGenerator() {
+  const t = useTranslations('PseudoGenerator')
   const [options, setOptions] = useState<GenerateOptions>(DEFAULT_OPTIONS)
   const [generatedPseudos, setGeneratedPseudos] = useState<GeneratedPseudo[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
@@ -96,7 +99,7 @@ export default function PseudoGenerator() {
         autoCheckAvailability(item.pseudo, index)
       })
     } catch (err) {
-      setError('Une erreur est survenue lors de la génération. Veuillez réessayer.')
+      setError(t('error'))
       console.error('Error generating pseudos:', err)
     } finally {
       setIsGenerating(false)
@@ -199,10 +202,10 @@ export default function PseudoGenerator() {
                 <Sparkles className="w-12 h-12 text-white" />
               </div>
               <h3 className="text-3xl font-black text-white uppercase tracking-tighter mb-4 text-center">
-                Prêt à générer ?
+                {t('ready')}
               </h3>
               <p className="text-text-secondary text-center max-w-md px-4 font-medium text-lg">
-                Configure tes options à gauche et clique sur "Générer" pour obtenir tes pseudos.
+                {t('ready_desc')}
               </p>
             </motion.div>
           )}

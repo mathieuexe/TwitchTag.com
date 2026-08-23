@@ -5,17 +5,19 @@ import { usePathname } from 'next/navigation'
 import { Twitch, Menu, X, MessageSquare, LogIn, LayoutDashboard } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
 
 export default function Header() {
   const pathname = usePathname()
   const { data: session } = useSession()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const t = useTranslations('Header')
 
   const navItems = [
-    { href: '/', label: 'Générateur' },
-    { href: '/verifier', label: 'Vérificateur' },
-    { href: '/donation', label: 'Soutenir' },
-    { href: '/chat', label: 'Chat en direct' },
+    { href: '/', label: t('home') },
+    { href: '/verifier', label: t('verifier') },
+    { href: '/donation', label: t('donation') },
+    { href: '/chat', label: t('chat') },
   ]
 
   const isActive = (href: string) => {
@@ -79,7 +81,7 @@ export default function Header() {
               className="flex items-center gap-1.5 text-sm font-bold text-twitch-purple hover:text-white transition-colors bg-twitch-purple/10 px-3 py-1.5 rounded-md"
             >
               <LayoutDashboard className="w-4 h-4" />
-              ADMIN
+              {t('admin')}
             </Link>
           ) : (
             <Link
@@ -87,7 +89,7 @@ export default function Header() {
               className="flex items-center gap-1.5 text-sm font-semibold text-text-muted hover:text-white transition-colors"
             >
               <LogIn className="w-4 h-4" />
-              Se connecter
+              {t('login')}
             </Link>
           )}
         </div>
@@ -119,7 +121,7 @@ export default function Header() {
                 className="px-6 py-4 text-sm font-bold uppercase tracking-wider border-b border-white/5 hover:bg-white/5 flex items-center gap-2 text-twitch-purple"
               >
                 <LayoutDashboard className="w-4 h-4" />
-                Tableau de bord Admin
+                {t('admin_mobile')}
               </Link>
             ) : (
               <Link
@@ -128,7 +130,7 @@ export default function Header() {
                 className="px-6 py-4 text-sm font-semibold uppercase tracking-wider border-b border-white/5 hover:bg-white/5 flex items-center gap-2 text-text-muted"
               >
                 <LogIn className="w-4 h-4" />
-                Se connecter
+                {t('login')}
               </Link>
             )}
           </nav>
