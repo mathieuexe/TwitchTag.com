@@ -4,7 +4,7 @@
 
 :root {
   --bg-primary: #0E0E10;
-  --bg-secondary: #000000;
+  --bg-secondary: #18181B;
   --twitch-purple: #9146FF;
 }
 
@@ -16,66 +16,42 @@
 
 body {
   background-color: var(--bg-primary);
-  color: #FFFFFF;
+  color: #EFEFF1;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
 }
 
-/* Typography styles for that blocky Porto Rocha feel */
-h1, h2, h3, h4, h5, h6 {
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
-
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 12px;
+  width: 10px;
 }
 ::-webkit-scrollbar-track {
   background: var(--bg-primary);
-  border-left: 1px solid #303032;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--twitch-purple);
+  background: #3a3a3d;
+  border-radius: 5px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #772CE8;
+  background: #53535f;
 }
 
-/* Neo-brutalist Utilities */
+/* Base Twitch Utilities */
 @layer components {
-  .brutal-card {
-    @apply bg-bg-secondary border-2 border-[#303032] shadow-brutal transition-all duration-300;
+  .twitch-card {
+    @apply bg-bg-secondary rounded-xl shadow-lg border border-white/5;
   }
   
-  .brutal-card:hover {
-    @apply -translate-y-1 translate-x-[-2px] shadow-brutal-lg border-white/20;
+  .twitch-btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 font-semibold bg-twitch-purple text-white rounded-md transition-all duration-200 hover:bg-twitch-purple-hover disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
-  .brutal-btn {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-bold uppercase tracking-wider bg-twitch-purple text-white border-2 border-black shadow-brutal-yellow transition-all duration-200 active:translate-y-1 active:translate-x-1 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed;
+  .twitch-btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 font-semibold bg-bg-input text-text-primary rounded-md transition-all duration-200 hover:bg-white/20;
   }
 
-  .brutal-btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-bold uppercase tracking-wider bg-white text-black border-2 border-black shadow-brutal transition-all duration-200 active:translate-y-1 active:translate-x-1 active:shadow-none;
-  }
-
-  .brutal-input {
-    @apply w-full px-4 py-3 bg-bg-primary border-2 border-[#303032] text-white font-medium focus:outline-none focus:border-twitch-purple focus:shadow-brutal transition-all duration-200 placeholder:text-text-muted;
-  }
-
-  .marquee-container {
-    @apply relative flex overflow-x-hidden border-y-2 border-[#303032] bg-bg-secondary py-3;
-  }
-  
-  .marquee-content {
-    @apply whitespace-nowrap flex items-center gap-8 px-4;
-    animation: marquee 60s linear infinite;
-  }
-  
-  .marquee-container:hover .marquee-content {
-    animation-play-state: paused;
+  .twitch-input {
+    @apply w-full px-4 py-2 bg-bg-input rounded-md text-white border-2 border-transparent focus:outline-none focus:border-twitch-purple focus:bg-black transition-all duration-200 placeholder:text-text-muted;
   }
 }
