@@ -74,6 +74,8 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     avatar_url TEXT,
     content TEXT NOT NULL,
     ip_address TEXT,
+    name_color TEXT,
+    is_deleted BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

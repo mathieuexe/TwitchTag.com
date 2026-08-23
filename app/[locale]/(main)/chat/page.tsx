@@ -12,6 +12,8 @@ interface ChatMessage {
   avatar_url?: string
   content: string
   created_at: string
+  name_color?: string
+  is_deleted?: boolean
 }
 
 interface OnlineUser {
@@ -20,9 +22,16 @@ interface OnlineUser {
   online_at: string
   is_admin?: boolean
   status?: 'online' | 'away' | 'dnd'
+  name_color?: string
 }
 
 const QUICK_EMOJIS = ['😂', '❤️', '🔥', 'GG', '🎮', '💀', '👀']
+const TWITCH_COLORS = [
+  '#FF0000', '#0000FF', '#008000', '#B22222', '#FF7F50',
+  '#9ACD32', '#FF4500', '#2E8B57', '#DAA520', '#D2691E',
+  '#5F9EA0', '#1E90FF', '#FF69B4', '#8A2BE2', '#00FF7F',
+  '#9146FF'
+]
 
 export default function ChatPage() {
   const [isAdmin, setIsAdmin] = useState(false)
@@ -39,8 +48,10 @@ export default function ChatPage() {
   
   // Profile & Status
   const [userStatus, setUserStatus] = useState<'online' | 'away' | 'dnd'>('online')
+  const [nameColor, setNameColor] = useState('#9146FF')
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [editAvatarUrl, setEditAvatarUrl] = useState('')
+  const [editNameColor, setEditNameColor] = useState('#9146FF')
   
   const [chatSettings, setChatSettings] = useState<{ is_disabled: boolean, pinned_message: string | null }>({
     is_disabled: false,
@@ -52,11 +63,13 @@ export default function ChatPage() {
   useEffect(() => {
     const savedAvatar = localStorage.getItem('chat_avatar_url')
     const savedStatus = localStorage.getItem('chat_user_status') as 'online' | 'away' | 'dnd'
+    const savedColor = localStorage.getItem('chat_name_color')
     if (savedAvatar) {
       setAvatarUrl(savedAvatar)
       setAvatarUrlInput(savedAvatar)
     }
     if (savedStatus) setUserStatus(savedStatus)
+    if (savedColor) setNameColor(savedColor)
 
     const initAuth = async () => {
       const session = await getSession()
@@ -125,7 +138,8 @@ export default function ChatPage() {
             avatar_url: presence.avatar_url,
             online_at: presence.online_at,
             is_admin: presence.is_admin,
-            status: presence.status || 'online'
+            status: presence.status || 'online',
+            name_color: presence.name_color || '#9146FF'
           })
         }
         // sort by online_at, but put admins at the top
@@ -138,6 +152,9 @@ export default function ChatPage() {
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
         setMessages((prev) => [...prev, payload.new as ChatMessage])
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chat_messages' }, (payload) => {
+        setMessages((prev) => prev.map(m => m.id === payload.new.id ? payload.new as ChatMessage : m))
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chat_messages' }, (payload) => {
         setMessages((prev) => prev.filter(m => m.id !== payload.old.id))
@@ -155,7 +172,8 @@ export default function ChatPage() {
             avatar_url: avatarUrl,
             online_at: new Date().toISOString(),
             is_admin: isAdmin,
-            status: userStatus
+            status: userStatus,
+            name_color: nameColor
           })
         }
       })
@@ -165,12 +183,14 @@ export default function ChatPage() {
     return () => {
       chatChannel.unsubscribe()
     }
-  }, [isJoined, username, isAdmin]) // Intentionally not tracking avatarUrl/userStatus here so it doesn't re-subscribe
+  }, [isJoined, username, isAdmin]) // Intentionally not tracking avatarUrl/userStatus/nameColor here so it doesn't re-subscribe
 
   const updateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     setAvatarUrl(editAvatarUrl)
+    setNameColor(editNameColor)
     localStorage.setItem('chat_avatar_url', editAvatarUrl)
+    localStorage.setItem('chat_name_color', editNameColor)
     setShowProfileModal(false)
     if (channel) {
       await channel.track({
@@ -178,7 +198,8 @@ export default function ChatPage() {
         avatar_url: editAvatarUrl,
         online_at: new Date().toISOString(),
         is_admin: isAdmin,
-        status: userStatus
+        status: userStatus,
+        name_color: editNameColor
       })
     }
   }
@@ -192,7 +213,8 @@ export default function ChatPage() {
         avatar_url: avatarUrl,
         online_at: new Date().toISOString(),
         is_admin: isAdmin,
-        status: newStatus
+        status: newStatus,
+        name_color: nameColor
       })
     }
   }
@@ -212,7 +234,7 @@ export default function ChatPage() {
       const res = await fetch('/api/chat/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, avatar_url: avatarUrl || null, content })
+        body: JSON.stringify({ username, avatar_url: avatarUrl || null, content, name_color: nameColor })
       })
       
       const data = await res.json()
@@ -321,8 +343,8 @@ export default function ChatPage() {
         <div className="flex-1 overflow-y-auto p-4 space-y-3 hide-scrollbar">
           {onlineUsers.map((u, i) => {
             let statusColor = 'bg-twitch-green'
-            if (u.status === 'away') statusColor = 'bg-twitch-yellow'
-            if (u.status === 'dnd') statusColor = 'bg-twitch-pink'
+            if (u.status === 'away') statusColor = 'bg-orange-500'
+            if (u.status === 'dnd') statusColor = 'bg-red-600'
 
             return (
             <div 
@@ -331,6 +353,7 @@ export default function ChatPage() {
               onClick={() => {
                 if (u.username === username) {
                   setEditAvatarUrl(avatarUrl)
+                  setEditNameColor(nameColor)
                   setShowProfileModal(true)
                 }
               }}
@@ -354,7 +377,10 @@ export default function ChatPage() {
                 <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-bg-secondary ${statusColor}`}></div>
               </div>
               <div className="flex flex-col overflow-hidden">
-                <span className={`text-sm font-semibold truncate ${u.username === username ? 'text-twitch-purple' : 'text-text-primary'}`}>
+                <span 
+                  className={`text-sm font-semibold truncate`}
+                  style={{ color: u.name_color || (u.username === username ? '#9146FF' : '#ffffff') }}
+                >
                   {u.username}
                 </span>
                 {u.is_admin && (
@@ -442,22 +468,25 @@ export default function ChatPage() {
                   <img 
                     src={displayAvatar} 
                     alt={msg.username} 
-                    className="w-5 h-5 rounded-full object-cover self-center ml-1 bg-bg-input"
+                    className={`w-5 h-5 rounded-full object-cover self-center ml-1 bg-bg-input ${msg.is_deleted ? 'opacity-50' : ''}`}
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = 'none'
                     }}
                   />
                 )}
                 
-                <span className={`font-bold text-sm ${msg.username === username ? 'text-twitch-purple' : 'text-white'}`}>
+                <span 
+                  className={`font-bold text-sm ${msg.is_deleted ? 'opacity-50' : ''}`}
+                  style={{ color: msg.name_color || onlineUser?.name_color || (msg.username === username ? '#9146FF' : '#ffffff') }}
+                >
                   {msg.username}
                 </span>
-                <span className="text-text-primary text-sm break-words flex-1">
+                <span className={`text-sm break-words flex-1 ${msg.is_deleted ? 'text-text-muted italic' : 'text-text-primary'}`}>
                   {msg.content}
                 </span>
                 
                 {/* Admin Message Controls */}
-                {isAdmin && (
+                {(isAdmin && !msg.is_deleted) && (
                   <div className="hidden group-hover:flex items-center gap-1 bg-bg-primary rounded px-1 ml-2">
                     <button 
                       onClick={() => adminAction('delete_message', { id: msg.id })}
@@ -550,22 +579,41 @@ export default function ChatPage() {
               <div className="flex gap-2">
                 <button 
                   onClick={() => updateStatus('online')} 
+                  type="button"
                   className={`flex-1 py-2 rounded-md font-bold text-xs flex items-center justify-center gap-1.5 transition-colors ${userStatus === 'online' ? 'bg-twitch-green/20 text-twitch-green border border-twitch-green/50' : 'bg-bg-input text-text-muted hover:bg-white/10 hover:text-white'}`}
                 >
                   <div className="w-2.5 h-2.5 rounded-full bg-twitch-green"></div> En ligne
                 </button>
                 <button 
                   onClick={() => updateStatus('away')} 
-                  className={`flex-1 py-2 rounded-md font-bold text-xs flex items-center justify-center gap-1.5 transition-colors ${userStatus === 'away' ? 'bg-twitch-yellow/20 text-twitch-yellow border border-twitch-yellow/50' : 'bg-bg-input text-text-muted hover:bg-white/10 hover:text-white'}`}
+                  type="button"
+                  className={`flex-1 py-2 rounded-md font-bold text-xs flex items-center justify-center gap-1.5 transition-colors ${userStatus === 'away' ? 'bg-orange-500/20 text-orange-500 border border-orange-500/50' : 'bg-bg-input text-text-muted hover:bg-white/10 hover:text-white'}`}
                 >
-                  <div className="w-2.5 h-2.5 rounded-full bg-twitch-yellow"></div> Absent
+                  <div className="w-2.5 h-2.5 rounded-full bg-orange-500"></div> Absent
                 </button>
                 <button 
                   onClick={() => updateStatus('dnd')} 
-                  className={`flex-1 py-2 rounded-md font-bold text-xs flex items-center justify-center gap-1.5 transition-colors ${userStatus === 'dnd' ? 'bg-twitch-pink/20 text-twitch-pink border border-twitch-pink/50' : 'bg-bg-input text-text-muted hover:bg-white/10 hover:text-white'}`}
+                  type="button"
+                  className={`flex-1 py-2 rounded-md font-bold text-xs flex items-center justify-center gap-1.5 transition-colors ${userStatus === 'dnd' ? 'bg-red-600/20 text-red-600 border border-red-600/50' : 'bg-bg-input text-text-muted hover:bg-white/10 hover:text-white'}`}
                 >
-                  <div className="w-2.5 h-2.5 rounded-full bg-twitch-pink"></div> Occupé
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-600"></div> Occupé
                 </button>
+              </div>
+            </div>
+
+            {/* Name Color Selection */}
+            <div>
+              <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-3">Couleur du nom</label>
+              <div className="grid grid-cols-8 gap-2">
+                {TWITCH_COLORS.map(color => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setEditNameColor(color)}
+                    className={`w-6 h-6 rounded-full transition-transform ${editNameColor === color ? 'scale-125 ring-2 ring-white ring-offset-2 ring-offset-bg-secondary' : 'hover:scale-110'}`}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
               </div>
             </div>
 

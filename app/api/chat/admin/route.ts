@@ -14,7 +14,11 @@ export async function POST(req: NextRequest) {
     const { action, payload } = await req.json()
 
     if (action === 'delete_message') {
-      const { error } = await supabaseServer.from('chat_messages').delete().eq('id', payload.id)
+      // @ts-ignore
+      const { error } = await supabaseServer.from('chat_messages').update({ 
+        is_deleted: true, 
+        content: '[Message supprimé par un modérateur]' 
+      }).eq('id', payload.id)
       if (error) throw error
     } 
     
