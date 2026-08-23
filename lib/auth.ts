@@ -23,7 +23,12 @@ export const authOptions: NextAuthOptions = {
           .eq('email', credentials.email)
           .single() as { data: any, error: any }
 
-        if (error || !admin) {
+        if (error) {
+          console.error("Supabase Error during auth:", error)
+          return null
+        }
+        
+        if (!admin) {
           return null
         }
 
@@ -70,6 +75,7 @@ export const authOptions: NextAuthOptions = {
     signIn: '/admin/login',
     error: '/admin/login',
   },
+  secret: process.env.NEXTAUTH_SECRET || 'twitchtag-secret-key-2024-very-secure',
   session: {
     strategy: 'jwt',
     maxAge: 24 * 60 * 60, // 24 hours
