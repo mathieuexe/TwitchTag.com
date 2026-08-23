@@ -23,7 +23,7 @@ export default function AdminSettingsPage() {
         </p>
       </div>
 
-      <div className="brutal-card p-6 bg-bg-secondary">
+      <div className="twitch-card p-6 bg-bg-secondary">
         <h3 className="text-2xl font-black text-white uppercase mb-6 border-b-4 border-[#303032] pb-4">
           Général
         </h3>
@@ -33,7 +33,7 @@ export default function AdminSettingsPage() {
             <label className="block text-sm font-bold text-white uppercase tracking-wider mb-2">
               Nom du site
             </label>
-            <input type="text" defaultValue="TwitchTag" className="brutal-input" />
+            <input type="text" defaultValue="TwitchTag" className="twitch-input bg-bg-primary" />
           </div>
 
           <div>
@@ -52,7 +52,7 @@ export default function AdminSettingsPage() {
         </div>
       </div>
 
-      <div className="brutal-card p-6 bg-bg-secondary">
+      <div className="twitch-card p-6 bg-bg-secondary">
         <h3 className="text-2xl font-black text-white uppercase mb-6 border-b-4 border-[#303032] pb-4">
           Générateur
         </h3>
@@ -62,7 +62,7 @@ export default function AdminSettingsPage() {
             <label className="block text-sm font-bold text-white uppercase tracking-wider mb-2">
               Limite de génération par IP (par heure)
             </label>
-            <input type="number" defaultValue="50" className="brutal-input" />
+            <input type="number" defaultValue="50" className="twitch-input bg-bg-primary" />
           </div>
         </div>
       </div>
@@ -70,7 +70,7 @@ export default function AdminSettingsPage() {
       <button 
         onClick={handleSave}
         disabled={saving}
-        className="brutal-btn py-4 text-xl"
+        className="twitch-btn py-4 text-xl w-full sm:w-auto"
       >
         <Save className="w-6 h-6" />
         {saving ? 'Sauvegarde...' : 'Enregistrer les modifications'}

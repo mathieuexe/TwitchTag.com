@@ -2,12 +2,19 @@
 
 import { useEffect, useState } from 'react'
 import { supabaseClient } from '@/lib/supabase/client'
-import { Megaphone, Plus, Loader2, Trash2, Edit2 } from 'lucide-react'
+import { Megaphone, Plus, Loader2, Trash2, Edit2, X } from 'lucide-react'
 import { Announcement } from '@/types'
 
 export default function AdminAnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // Form state
+  const [title, setTitle] = useState('')
+  const [content, setContent] = useState('')
+  const [type, setType] = useState('info')
 
   useEffect(() => {
     fetchAnnouncements()
@@ -21,11 +28,54 @@ export default function AdminAnnouncementsPage() {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setAnnouncements(data || [])
+      
+      const mappedData: Announcement[] = (data || []).map(item => ({
+        id: item.id,
+        title: item.title,
+        content: item.content,
+        type: item.type as any,
+        isActive: item.is_active,
+        createdAt: item.created_at,
+      }))
+      
+      setAnnouncements(mappedData)
     } catch (error) {
       console.error('Error fetching announcements:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    try {
+      const { data, error } = await supabaseClient
+        .from('announcements')
+        .insert([{ title, content, type, is_active: false }])
+        .select()
+        .single()
+
+      if (error) throw error
+      
+      const newAnnouncement: Announcement = {
+        id: data.id,
+        title: data.title,
+        content: data.content,
+        type: data.type as any,
+        isActive: data.is_active,
+        createdAt: data.created_at,
+      }
+      
+      setAnnouncements([newAnnouncement, ...announcements])
+      setShowForm(false)
+      setTitle('')
+      setContent('')
+      setType('info')
+    } catch (error) {
+      console.error('Error creating announcement:', error)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -68,24 +118,76 @@ export default function AdminAnnouncementsPage() {
             Gérer les messages affichés aux utilisateurs
           </p>
         </div>
-        <button className="brutal-btn bg-twitch-pink text-black py-3">
-          <Plus className="w-5 h-5" />
-          Nouvelle Annonce
+        <button 
+          onClick={() => setShowForm(!showForm)}
+          className="twitch-btn bg-twitch-pink text-black py-3"
+        >
+          {showForm ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+          {showForm ? 'Annuler' : 'Nouvelle Annonce'}
         </button>
       </div>
 
+      {showForm && (
+        <div className="twitch-card p-6 bg-bg-secondary border-twitch-pink">
+          <h2 className="text-2xl font-black text-white uppercase mb-6">Créer une annonce</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-bold text-white uppercase tracking-wider mb-2">Titre</label>
+              <input 
+                type="text" 
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                className="twitch-input bg-bg-primary" 
+                placeholder="Titre de l'annonce"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-white uppercase tracking-wider mb-2">Contenu</label>
+              <textarea 
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                required
+                className="twitch-input bg-bg-primary min-h-[100px]" 
+                placeholder="Contenu du message..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-white uppercase tracking-wider mb-2">Type</label>
+              <select 
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+                className="twitch-input bg-bg-primary"
+              >
+                <option value="info">Info (Cyan)</option>
+                <option value="success">Succès (Vert)</option>
+                <option value="warning">Attention (Jaune)</option>
+                <option value="error">Erreur (Rose)</option>
+              </select>
+            </div>
+            <button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="twitch-btn w-full py-3"
+            >
+              {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Publier'}
+            </button>
+          </form>
+        </div>
+      )}
+
       <div className="grid gap-6">
         {loading ? (
-          <div className="brutal-card p-12 flex justify-center">
+          <div className="twitch-card p-12 flex justify-center">
             <Loader2 className="w-8 h-8 animate-spin text-twitch-pink" />
           </div>
         ) : announcements.length === 0 ? (
-          <div className="brutal-card p-12 text-center text-text-muted font-bold uppercase">
+          <div className="twitch-card p-12 text-center text-text-muted font-bold uppercase">
             Aucune annonce configurée
           </div>
         ) : (
           announcements.map((announcement) => (
-            <div key={announcement.id} className={`brutal-card p-6 ${!announcement.isActive && 'opacity-60'}`}>
+            <div key={announcement.id} className={`twitch-card p-6 ${!announcement.isActive && 'opacity-60'}`}>
               <div className="flex justify-between items-start gap-4">
                 <div>
                   <div className="flex items-center gap-3 mb-2">
