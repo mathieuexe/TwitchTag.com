@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Check if user is banned
-    const { data: ban } = await supabaseServer.from('chat_bans').select('*').eq('ip_address', ip).single()
+    const { data: ban } = await supabaseServer.from('chat_bans').select('*').eq('ip_address', ip).maybeSingle()
     if (ban) {
       return NextResponse.json({ error: `Vous êtes banni du chat. Raison : ${(ban as any).reason || 'Aucune'}` }, { status: 403 })
     }

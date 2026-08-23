@@ -22,14 +22,12 @@ export default function AdminAnnouncementsPage() {
 
   const fetchAnnouncements = async () => {
     try {
-      const { data, error } = await supabaseClient
-        .from('announcements')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
+      const res = await fetch('/api/admin/announcements')
+      if (!res.ok) throw new Error('Failed to fetch announcements')
       
-      const mappedData: Announcement[] = (data || []).map(item => ({
+      const data = await res.json()
+      
+      const mappedData: Announcement[] = (data || []).map((item: any) => ({
         id: item.id,
         title: item.title,
         content: item.content,
@@ -50,13 +48,15 @@ export default function AdminAnnouncementsPage() {
     e.preventDefault()
     setIsSubmitting(true)
     try {
-      const { data, error } = await supabaseClient
-        .from('announcements')
-        .insert([{ title, content, type, is_active: false }])
-        .select()
-        .single()
+      const res = await fetch('/api/admin/announcements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content, type, is_active: false })
+      })
 
-      if (error) throw error
+      if (!res.ok) throw new Error('Failed to create announcement')
+      
+      const data = await res.json()
       
       const newAnnouncement: Announcement = {
         id: data.id,
@@ -82,7 +82,10 @@ export default function AdminAnnouncementsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Supprimer cette annonce ?')) return
     try {
-      await supabaseClient.from('announcements').delete().eq('id', id)
+      const res = await fetch(`/api/admin/announcements/${id}`, {
+        method: 'DELETE'
+      })
+      if (!res.ok) throw new Error('Failed to delete')
       setAnnouncements(announcements.filter(a => a.id !== id))
     } catch (error) {
       console.error('Error deleting:', error)
@@ -91,12 +94,13 @@ export default function AdminAnnouncementsPage() {
 
   const toggleActive = async (id: string, currentStatus: boolean) => {
     try {
-      const { error } = await supabaseClient
-        .from('announcements')
-        .update({ is_active: !currentStatus })
-        .eq('id', id)
+      const res = await fetch(`/api/admin/announcements/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: !currentStatus })
+      })
       
-      if (error) throw error
+      if (!res.ok) throw new Error('Failed to update status')
       
       setAnnouncements(announcements.map(a => 
         a.id === id ? { ...a, isActive: !currentStatus } : a
