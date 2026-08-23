@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Users, Sparkles, Calendar, Activity } from 'lucide-react'
+import { trackVisit } from '@/lib/utils/stats'
 
 interface Stats {
   totalPseudos: number
@@ -19,6 +20,9 @@ export default function LiveCounters() {
   })
 
   useEffect(() => {
+    // Track visit on mount
+    trackVisit(window.location.pathname)
+
     const fetchStats = async () => {
       try {
         const response = await fetch('/api/stats')
