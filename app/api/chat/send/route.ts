@@ -15,8 +15,12 @@ export async function POST(req: NextRequest) {
 
     // Protect "admin" usernames
     if (!isAdmin) {
-      if (username.toLowerCase() === 'admin') {
-        return NextResponse.json({ error: 'Ce pseudo est réservé aux administrateurs.' }, { status: 403 })
+      // Normalize to catch sneaky admin variations (e.g. "a d m i n", "@dmin", "4dmin", "admin_officiel")
+      const normalizedUsername = username.toLowerCase().replace(/[4@]/g, 'a').replace(/[1!]/g, 'i').replace(/0/g, 'o')
+      const adminRegex = /a[\W_]*d[\W_]*m[\W_]*i[\W_]*n/i
+      
+      if (adminRegex.test(normalizedUsername)) {
+        return NextResponse.json({ error: 'L\'utilisation du mot "admin" dans le pseudo est strictement réservée.' }, { status: 403 })
       }
       
       const { data: adminMatch } = await supabaseServer
@@ -26,7 +30,7 @@ export async function POST(req: NextRequest) {
         .maybeSingle()
         
       if (adminMatch) {
-        return NextResponse.json({ error: 'Ce pseudo est réservé aux administrateurs.' }, { status: 403 })
+        return NextResponse.json({ error: 'Ce pseudo appartient déjà à un administrateur.' }, { status: 403 })
       }
     }
 
