@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS admin_users (
 
 
 -- Table: chat_messages (Messages du chat en direct)
+-- Note: Supporte les utilisateurs anonymes via des pseudos générés (ex: "anonyme-123")
 CREATE TABLE IF NOT EXISTS chat_messages (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     username TEXT NOT NULL,

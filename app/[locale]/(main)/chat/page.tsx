@@ -110,10 +110,26 @@ export default function ChatPage() {
     e.preventDefault()
     if (!usernameInput.trim()) return
     
+    const lowerInput = usernameInput.trim().toLowerCase()
+    const isAdminVariant = lowerInput === 'admin' || lowerInput.startsWith('admin')
+    
+    if (isAdminVariant && !isAdmin) {
+      alert("Ce pseudo est réservé aux administrateurs.")
+      return
+    }
+
     setUsername(usernameInput.trim())
     const finalAvatar = avatarUrlInput.trim()
     setAvatarUrl(finalAvatar)
     if (finalAvatar) localStorage.setItem('chat_avatar_url', finalAvatar)
+    setIsJoined(true)
+  }
+
+  const handleAnonymousJoin = () => {
+    const randomNum = Math.floor(Math.random() * 1000) + 1
+    const anonName = `anonyme-${randomNum}`
+    setUsername(anonName)
+    setAvatarUrl('')
     setIsJoined(true)
   }
 
@@ -446,9 +462,25 @@ export default function ChatPage() {
               <p className="text-xs text-text-muted mt-2">Lien vers une image PNG, JPG ou GIF.</p>
             </div>
 
-            <button type="submit" className="w-full twitch-btn py-3 text-lg mt-4">
-              Rejoindre le chat
-            </button>
+            <div className="flex flex-col gap-3 mt-4">
+              <button type="submit" className="w-full twitch-btn py-3 text-lg">
+                Rejoindre le chat
+              </button>
+              
+              <div className="relative flex items-center py-2">
+                <div className="flex-grow border-t border-white/10"></div>
+                <span className="flex-shrink-0 mx-4 text-text-muted text-xs uppercase font-semibold">OU</span>
+                <div className="flex-grow border-t border-white/10"></div>
+              </div>
+
+              <button 
+                type="button" 
+                onClick={handleAnonymousJoin}
+                className="w-full bg-bg-input hover:bg-white/10 text-white font-semibold py-3 rounded-md transition-colors border border-white/10"
+              >
+                Rejoindre en anonyme
+              </button>
+            </div>
           </form>
         </motion.div>
       </div>
