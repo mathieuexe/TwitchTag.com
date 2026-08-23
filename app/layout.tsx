@@ -24,10 +24,49 @@ const spaceMono = Space_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'TwitchTag - Générateur de Pseudo Twitch',
-  description: 'Générez et vérifiez des pseudos Twitch disponibles. Trouvez le pseudo parfait pour votre chaîne Twitch.',
-  keywords: ['twitch', 'pseudo', 'générateur', 'username', 'streamer', 'gaming'],
+  title: {
+    default: 'TwitchTag - Générateur de Pseudo Gaming & Twitch #1',
+    template: '%s | TwitchTag'
+  },
+  description: 'Le meilleur générateur de pseudo gaming et Twitch. Trouvez des idées de pseudos originaux, stylés et vérifiez leur disponibilité en direct. Gaming pseudo generator.',
+  keywords: [
+    'générateur de pseudo', 
+    'twitch pseudo', 
+    'idée pseudo twitch', 
+    'generate pseudo gaming', 
+    'gaming pseudo generator', 
+    'pseudo gamer',
+    'twitch name generator',
+    'vérificateur pseudo twitch',
+    'pseudo disponible',
+    'pseudo original'
+  ],
   authors: [{ name: 'TwitchTag' }],
+  creator: 'TwitchTag',
+  openGraph: {
+    type: 'website',
+    locale: 'fr_FR',
+    url: 'https://twitch-tag-com.vercel.app/',
+    title: 'TwitchTag - Générateur de Pseudo Gaming & Twitch #1',
+    description: 'Le meilleur générateur de pseudo gaming et Twitch. Trouvez des idées de pseudos originaux et vérifiez leur disponibilité en temps réel.',
+    siteName: 'TwitchTag',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'TwitchTag - Le Générateur de Pseudo Gaming Référence',
+    description: 'Générez et vérifiez la disponibilité de votre futur pseudo Twitch en un clic.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 }
 
 export default function RootLayout({
