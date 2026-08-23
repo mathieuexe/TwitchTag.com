@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generatePseudos } from '@/lib/utils/pseudo-generator'
 import { supabaseServer } from '@/lib/supabase/server'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()

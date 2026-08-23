@@ -21,7 +21,7 @@ const handler = NextAuth({
           .from('admin_users')
           .select('*')
           .eq('email', credentials.email)
-          .single()
+          .single() as { data: any, error: any }
 
         if (error || !admin) {
           return null
@@ -37,6 +37,7 @@ const handler = NextAuth({
         // Update last login
         await supabaseServer
           .from('admin_users')
+          // @ts-ignore - Supabase types are not generated yet
           .update({ last_login_at: new Date().toISOString() })
           .eq('id', admin.id)
 
@@ -45,22 +46,22 @@ const handler = NextAuth({
           email: admin.email,
           name: admin.name,
           isSuperAdmin: admin.is_super_admin,
-        }
+        } as any
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id
-        token.isSuperAdmin = user.isSuperAdmin
+        token.id = (user as any).id
+        token.isSuperAdmin = (user as any).isSuperAdmin
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string
-        session.user.isSuperAdmin = token.isSuperAdmin as boolean
+        (session.user as any).id = token.id as string;
+        (session.user as any).isSuperAdmin = token.isSuperAdmin as boolean;
       }
       return session
     },

@@ -30,14 +30,14 @@ export async function POST(request: NextRequest) {
       const session = event.data.object as Stripe.Checkout.Session
 
       // Store donation in database
-      const { error } = await supabaseServer.from('donations').insert({
+      const { error } = await (supabaseServer.from('donations') as any).insert({
         amount: (session.amount_total || 0) / 100, // Convert from cents
         currency: session.currency || 'eur',
         stripe_session_id: session.id,
         stripe_payment_intent_id: session.payment_intent as string,
         status: 'completed',
-        donor_email: session.customer_details?.email,
-        donor_name: session.customer_details?.name,
+        donor_email: session.customer_details?.email || null,
+        donor_name: session.customer_details?.name || null,
         is_anonymous: false,
         completed_at: new Date().toISOString(),
       })
@@ -53,8 +53,8 @@ export async function POST(request: NextRequest) {
       const session = event.data.object as Stripe.Checkout.Session
 
       // Update donation status to failed
-      await supabaseServer
-        .from('donations')
+      await (supabaseServer
+        .from('donations') as any)
         .update({ status: 'failed' })
         .eq('stripe_session_id', session.id)
 
