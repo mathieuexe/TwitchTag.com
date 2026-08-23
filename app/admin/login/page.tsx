@@ -18,13 +18,21 @@ export default function AdminLogin() {
   useEffect(() => {
     const checkSetup = async () => {
       try {
-        const res = await fetch('/api/admin/setup/check')
+        const res = await fetch('/api/admin/setup/check', { cache: 'no-store' })
         const data = await res.json()
+        
+        if (!res.ok) {
+          setError(`Erreur BDD: ${data.details || data.error}`)
+          setIsCheckingSetup(false)
+          return
+        }
+
         if (data.needsSetup) {
           setNeedsSetup(true)
         }
       } catch (err) {
         console.error('Error checking setup', err)
+        setError('Erreur réseau lors de la vérification de la BDD')
       } finally {
         setIsCheckingSetup(false)
       }
