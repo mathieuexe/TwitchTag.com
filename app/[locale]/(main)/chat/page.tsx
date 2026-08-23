@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabaseClient } from '@/lib/supabase/client'
-import { Send, Users, User, MessageSquare, Shield, Trash2, Ban, Lock, Unlock, Pin, XCircle, BarChart2, Plus, Minus } from 'lucide-react'
+import { Send, Users, User, MessageSquare, Shield, Trash2, Ban, Lock, Unlock, Pin, XCircle, BarChart2, Plus, Minus, Search } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { getSession } from 'next-auth/react'
 
@@ -64,6 +64,12 @@ export default function ChatPage() {
   const [pollQuestion, setPollQuestion] = useState('')
   const [pollOptions, setPollOptions] = useState(['', ''])
   const [pinPoll, setPinPoll] = useState(false)
+  
+  // GIF Modal
+  const [showGifModal, setShowGifModal] = useState(false)
+  const [gifQuery, setGifQuery] = useState('')
+  const [gifResults, setGifResults] = useState<any[]>([])
+  const [isSearchingGif, setIsSearchingGif] = useState(false)
   
   const [chatSettings, setChatSettings] = useState<{ is_disabled: boolean, pinned_message: string | null }>({
     is_disabled: false,
@@ -307,6 +313,82 @@ export default function ChatPage() {
     } catch (err) {
       console.error(err)
     }
+  }
+
+  // GIF Functions
+  useEffect(() => {
+    if (showGifModal) {
+      searchGifs('')
+    }
+  }, [showGifModal])
+
+  const searchGifs = async (query: string) => {
+    setIsSearchingGif(true)
+    try {
+      const GIPHY_API_KEY = 'TSAciiELUMKaaSiw68yhdkwIsPPr0dMd'
+      const endpoint = query 
+        ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=20`
+        : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=20`
+      const res = await fetch(endpoint)
+      const data = await res.json()
+      setGifResults(data.data || [])
+    } catch (err) {
+      console.error(err)
+    }
+    setIsSearchingGif(false)
+  }
+
+  const sendGif = async (gifUrl: string) => {
+    setShowGifModal(false)
+    if (chatSettings.is_disabled && !isAdmin) return
+    try {
+      const res = await fetch('/api/chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, avatar_url: avatarUrl || null, content: gifUrl, name_color: nameColor })
+      })
+      if (!res.ok) alert("Erreur lors de l'envoi du GIF")
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const renderMessageContent = (content: string, isDeleted?: boolean) => {
+    if (isDeleted) return <span className="text-sm text-text-muted italic break-words flex-1">{content}</span>
+
+    // Is it a GIF?
+    if (content.match(/^https:\/\/media\d*\.giphy\.com\/media\//) || content.match(/^https:\/\/media\.giphy\.com\/media\//)) {
+      return (
+        <div className="mt-1 flex-1">
+          <img src={content} alt="GIF" className="max-w-[200px] max-h-[200px] rounded-md object-contain bg-bg-input" loading="lazy" />
+        </div>
+      )
+    }
+
+    // Parse links
+    const urlRegex = /(https?:\/\/[^\s]+)/g
+    const parts = content.split(urlRegex)
+    
+    return (
+      <span className="text-sm text-text-primary break-words flex-1">
+        {parts.map((part, i) => {
+          if (part.match(urlRegex)) {
+            return (
+              <a 
+                key={i} 
+                href={part} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-twitch-purple hover:underline break-all font-semibold"
+              >
+                {part}
+              </a>
+            )
+          }
+          return <span key={i}>{part}</span>
+        })}
+      </span>
+    )
   }
 
   if (!isJoined) {
@@ -602,9 +684,7 @@ export default function ChatPage() {
                     </div>
                   </div>
                 ) : (
-                  <span className={`text-sm break-words flex-1 ${msg.is_deleted ? 'text-text-muted italic' : 'text-text-primary'}`}>
-                    {msg.content}
-                  </span>
+                  renderMessageContent(msg.content, msg.is_deleted)
                 )}
                 
                 {/* Admin Message Controls */}
@@ -650,6 +730,14 @@ export default function ChatPage() {
                 {emoji}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => setShowGifModal(true)}
+              disabled={chatSettings.is_disabled && !isAdmin}
+              className="flex-shrink-0 px-3 py-1.5 bg-twitch-purple/20 text-twitch-purple hover:bg-twitch-purple/30 rounded-md text-xs font-bold transition-colors flex items-center justify-center uppercase"
+            >
+              GIF
+            </button>
           </div>
 
           <form onSubmit={sendMessage} className="flex gap-3">
@@ -846,6 +934,77 @@ export default function ChatPage() {
                 Sauvegarder
               </button>
             </form>
+          </div>
+        </motion.div>
+      </div>
+    )}
+
+    {/* GIF Modal */}
+    {showGifModal && (
+      <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="twitch-card bg-bg-secondary w-full max-w-2xl p-6 relative border-t-4 border-twitch-purple flex flex-col h-[80vh]"
+        >
+          <button 
+            onClick={() => setShowGifModal(false)} 
+            className="absolute top-4 right-4 text-text-muted hover:text-white transition-colors z-10"
+          >
+            <XCircle className="w-6 h-6" />
+          </button>
+          
+          <h3 className="text-xl font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+            Rechercher un GIF
+          </h3>
+          
+          <div className="relative mb-4">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="w-4 h-4 text-text-muted" />
+            </div>
+            <input
+              type="text"
+              value={gifQuery}
+              onChange={(e) => {
+                setGifQuery(e.target.value)
+                searchGifs(e.target.value)
+              }}
+              placeholder="Rechercher sur Giphy..."
+              className="twitch-input pl-10"
+            />
+          </div>
+
+          <div className="flex-1 overflow-y-auto hide-scrollbar">
+            {isSearchingGif ? (
+              <div className="flex justify-center items-center h-32">
+                <span className="text-text-muted">Recherche...</span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {gifResults.map((gif) => (
+                  <button
+                    key={gif.id}
+                    onClick={() => sendGif(gif.images.downsized.url)}
+                    className="relative aspect-video rounded-md overflow-hidden hover:ring-2 ring-twitch-purple transition-all bg-bg-input group"
+                  >
+                    <img 
+                      src={gif.images.downsized.url} 
+                      alt={gif.title}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="text-white font-bold text-xs uppercase tracking-wider">Envoyer</span>
+                    </div>
+                  </button>
+                ))}
+                {gifResults.length === 0 && (
+                  <div className="col-span-full text-center text-text-muted py-8">
+                    Aucun GIF trouvé
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </motion.div>
       </div>
