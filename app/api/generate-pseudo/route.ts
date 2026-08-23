@@ -23,12 +23,6 @@ export async function POST(request: NextRequest) {
     const inserts = pseudos.map((pseudo: string) => ({
       pseudo,
       keywords: keywords || [],
-      options: {
-        includeNumbers,
-        includeSpecialChars,
-        easyToRemember,
-      },
-      length: length || 12,
       has_numbers: includeNumbers || false,
       has_special_chars: includeSpecialChars || false,
       easy_to_remember: easyToRemember || true,

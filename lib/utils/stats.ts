@@ -39,7 +39,7 @@ export async function getSiteStats(): Promise<SiteStats> {
     const { count: monthlyVisits, error: monthlyVisitsError } = await supabaseClient
       .from('site_visits')
       .select('*', { count: 'exact', head: true })
-      .gte('visit_date', startOfMonth.toISOString().split('T')[0])
+      .gte('created_at', startOfMonth.toISOString())
 
     if (monthlyVisitsError) throw monthlyVisitsError
 
@@ -63,8 +63,8 @@ export async function getSiteStats(): Promise<SiteStats> {
 export async function trackVisit(pagePath: string) {
   try {
     await supabaseClient.from('site_visits').insert({
-      page_path: pagePath,
-      visit_date: new Date().toISOString().split('T')[0],
+      page_url: pagePath,
+      session_id: 'anonymous', // we can improve this later with actual session id
     })
   } catch (error) {
     console.error('Error tracking visit:', error)

@@ -1,7 +1,16 @@
 import { NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase/server'
+import { getServerSession } from 'next-auth'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
+  const session = await getServerSession()
+  
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     // Get start of month
     const startOfMonth = new Date()
@@ -33,7 +42,7 @@ export async function GET() {
       supabaseServer
         .from('site_visits')
         .select('*', { count: 'exact', head: true })
-        .gte('visit_date', startOfMonth.toISOString().split('T')[0]),
+        .gte('created_at', startOfMonth.toISOString()),
       supabaseServer
         .from('donations')
         .select('amount')

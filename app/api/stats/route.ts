@@ -35,7 +35,7 @@ export async function GET() {
     const { count: monthlyVisits, error: monthlyVisitsError } = await supabaseServer
       .from('site_visits')
       .select('*', { count: 'exact', head: true })
-      .gte('visit_date', startOfMonth.toISOString().split('T')[0])
+      .gte('created_at', startOfMonth.toISOString())
 
     if (monthlyVisitsError) throw monthlyVisitsError
 

@@ -21,32 +21,45 @@ export default function GeneratedList({
   onCheckAvailability,
   onCopy,
 }: GeneratedListProps) {
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
+  const [copiedPseudo, setCopiedPseudo] = useState<string | null>(null)
 
-  const handleCopy = async (pseudo: string, index: number) => {
+  const handleCopy = async (pseudo: string) => {
     await onCopy(pseudo)
-    setCopiedIndex(index)
-    setTimeout(() => setCopiedIndex(null), 2000)
+    setCopiedPseudo(pseudo)
+    setTimeout(() => setCopiedPseudo(null), 2000)
   }
 
-  const getRandomIcon = (index: number) => {
+  const getRandomIcon = (pseudo: string) => {
     const icons = [Flame, Zap, Shield]
+    // Use pseudo string length to pseudo-randomize icon consistently
+    const index = pseudo.length
     const Icon = icons[index % icons.length]
     const colors = ['text-[#ff8200]', 'text-[#facc15]', 'text-[#3b82f6]']
     return <Icon className={`w-5 h-5 ${colors[index % colors.length]}`} fill="currentColor" />
   }
 
+  // Sort: Available first, then checking (null), then taken (false)
+  const sortedPseudos = [...pseudos].sort((a, b) => {
+    const getScore = (available: boolean | null) => {
+      if (available === true) return 0
+      if (available === null) return 1
+      return 2
+    }
+    return getScore(a.available) - getScore(b.available)
+  })
+
   return (
     <div className="twitch-card overflow-hidden">
       {/* List */}
       <div className="divide-y divide-white/5">
-        {pseudos.map((item, index) => {
+        {sortedPseudos.map((item, index) => {
           const isAvailable = item.available === true
           const isTaken = item.available === false
 
           return (
             <motion.div
-              key={`${item.pseudo}-${index}`}
+              layout
+              key={item.pseudo}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
@@ -54,7 +67,7 @@ export default function GeneratedList({
             >
               <div className="flex items-center gap-4">
                 <Twitch className="w-5 h-5 text-twitch-purple" />
-                {getRandomIcon(index)}
+                {getRandomIcon(item.pseudo)}
 
                 {/* Pseudo */}
                 <span className={`text-lg font-semibold tracking-wide ${isTaken ? 'text-text-muted line-through' : 'text-white'}`}>
@@ -87,14 +100,14 @@ export default function GeneratedList({
                 {/* Copy Button */}
                 {isAvailable && (
                   <button
-                    onClick={() => handleCopy(item.pseudo, index)}
+                    onClick={() => handleCopy(item.pseudo)}
                     className={`text-sm font-semibold transition-colors flex items-center gap-1 ${
-                      copiedIndex === index
+                      copiedPseudo === item.pseudo
                         ? 'text-twitch-green'
                         : 'text-text-muted hover:text-white'
                     }`}
                   >
-                    {copiedIndex === index ? (
+                    {copiedPseudo === item.pseudo ? (
                       <Check className="w-4 h-4" />
                     ) : (
                       <Copy className="w-4 h-4" />

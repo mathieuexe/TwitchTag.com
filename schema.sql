@@ -55,6 +55,18 @@ CREATE TABLE IF NOT EXISTS announcements (
 );
 
 
+-- Table: admin_users (Administrateurs)
+CREATE TABLE IF NOT EXISTS admin_users (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    name TEXT,
+    is_super_admin BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    last_login_at TIMESTAMP WITH TIME ZONE
+);
+
+
 -- 2. ROW LEVEL SECURITY (RLS)
 -- ==========================================
 
@@ -89,8 +101,26 @@ CREATE POLICY "Enable read for all users" ON donations FOR SELECT USING (true);
 -- Tout le monde peut lire les annonces actives
 CREATE POLICY "Enable read for active announcements" ON announcements FOR SELECT USING (is_active = true);
 
+-- Politiques pour admin_users
+-- Seuls les admins peuvent lire (bloqué pour public)
+ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
+-- Le serveur (Service Role Key) bypassera cette règle automatiquement pour NextAuth
 
--- 3. FUNCTIONS & TRIGGERS
+
+-- 3. INITIAL DATA (SEED)
+-- ==========================================
+
+-- Création d'un compte admin par défaut (Email: admin@twitchtag.com | Mot de passe: admin123)
+-- PENSEZ À CHANGER CE MOT DE PASSE EN PRODUCTION
+INSERT INTO admin_users (email, password_hash, name, is_super_admin)
+VALUES (
+    'admin@twitchtag.com',
+    '$2a$10$r.M2Nn96X3Y80eM.k1L.KuvWfJ5H2t02T9c9JqB/bU9w.sR6N1p9C', 
+    'Admin Principal',
+    true
+) ON CONFLICT (email) DO NOTHING;
+
+-- 4. FUNCTIONS & TRIGGERS
 -- ==========================================
 
 -- Fonction pour mettre à jour 'updated_at'

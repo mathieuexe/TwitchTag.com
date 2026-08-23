@@ -8,27 +8,20 @@ import {
   DollarSign, 
   Settings, 
   Megaphone,
-  LogOut,
   Twitch
 } from 'lucide-react'
-
-async function getSession() {
-  try {
-    // Since we can't easily use next-auth in app router without proper setup,
-    // we'll use a simplified auth check
-    return null
-  } catch {
-    return null
-  }
-}
+import LogoutButton from '@/components/admin/LogoutButton'
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  // Simple auth check - in production, use proper auth middleware
-  // For now, we'll show the admin panel
+  const session = await getServerSession()
+
+  if (!session) {
+    redirect('/admin/login')
+  }
   
   const navItems = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -84,13 +77,7 @@ export default async function AdminLayout({
               <p className="text-xs text-text-secondary truncate">admin@twitchtag.com</p>
             </div>
           </div>
-          <Link
-            href="/"
-            className="flex items-center gap-2 w-full px-3 py-2 text-sm font-medium text-text-secondary hover:text-white hover:bg-bg-hover rounded-lg transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            Retour au site
-          </Link>
+          <LogoutButton />
         </div>
       </aside>
 
