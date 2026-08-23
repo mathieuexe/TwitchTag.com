@@ -15,7 +15,17 @@ export async function GET() {
 
     if (error) {
       console.error('Error checking admin setup:', error)
-      return NextResponse.json({ error: 'Database error', details: error.message || JSON.stringify(error), hint: error.hint }, { status: 500 })
+      let errorMessage = error.message
+      // Supabase JS sometimes returns an empty message object {"message":""} for 401 Unauthorized API keys
+      if (!errorMessage || errorMessage.trim() === '') {
+        if (JSON.stringify(error) === '{"message":""}') {
+          errorMessage = "La clé SUPABASE_SERVICE_ROLE_KEY est invalide ou non reconnue par Supabase (Erreur 401). Vérifiez que vous avez bien copié la clé 'service_role' (qui commence par eyJ...) et non 'sb_secret_...'."
+        } else {
+          errorMessage = JSON.stringify(error)
+        }
+      }
+      
+      return NextResponse.json({ error: 'Database error', details: errorMessage, hint: error.hint }, { status: 500 })
     }
 
     return NextResponse.json({ needsSetup: count === 0 })
