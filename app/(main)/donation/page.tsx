@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Heart, Gift, Zap, Star, Coffee, Crown, ArrowRight, Loader2, Check } from 'lucide-react'
+import { Heart, Gift, Zap, Star, Coffee, Crown, ArrowRight, Loader2, Check, Shield } from 'lucide-react'
 import Header from '@/components/layout/Header'
 
 const DONATION_AMOUNTS = [
