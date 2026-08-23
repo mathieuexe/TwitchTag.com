@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const { keywords, includeNumbers, includeSpecialChars, easyToRemember, length, count } = body
 
     // Generate pseudos
-    const pseudos = generatePseudos({
+    const pseudos = await generatePseudos({
       keywords: keywords || [],
       includeNumbers: includeNumbers ?? true,
       includeSpecialChars: includeSpecialChars ?? false,
@@ -24,6 +24,10 @@ export async function POST(request: NextRequest) {
       length: length || 12,
       count: count || 10,
     })
+
+    if (!pseudos || pseudos.length === 0) {
+      throw new Error('No pseudos generated')
+    }
 
     // Store generated pseudos in database
     const inserts = pseudos.map((pseudo: string) => ({
