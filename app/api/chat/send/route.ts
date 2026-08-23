@@ -10,12 +10,31 @@ export async function POST(req: NextRequest) {
     // Get client IP for banning system
     const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
 
+    const session = await getServerSession(authOptions)
+    const isAdmin = !!session
+
+    // Protect "admin" usernames
+    if (!isAdmin) {
+      if (username.toLowerCase() === 'admin') {
+        return NextResponse.json({ error: 'Ce pseudo est réservé aux administrateurs.' }, { status: 403 })
+      }
+      
+      const { data: adminMatch } = await supabaseServer
+        .from('admin_users')
+        .select('name')
+        .ilike('name', username)
+        .maybeSingle()
+        
+      if (adminMatch) {
+        return NextResponse.json({ error: 'Ce pseudo est réservé aux administrateurs.' }, { status: 403 })
+      }
+    }
+
     // 1. Check if chat is disabled
-    const { data: settings } = await supabaseServer.from('chat_settings').select('is_disabled').eq('id', 1).single()
+    const { data: settings } = await supabaseServer.from('chat_settings').select('is_disabled').eq('id', 1).maybeSingle()
     if (settings && (settings as any).is_disabled) {
       // Allow admins to bypass the chat lock
-      const session = await getServerSession(authOptions)
-      if (!session) {
+      if (!isAdmin) {
         return NextResponse.json({ error: 'Le chat est actuellement désactivé.' }, { status: 403 })
       }
     }

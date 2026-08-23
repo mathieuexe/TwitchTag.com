@@ -62,10 +62,21 @@ export async function getSiteStats(): Promise<SiteStats> {
 
 export async function trackVisit(pagePath: string) {
   try {
-    await supabaseClient.from('site_visits').insert({
-      page_url: pagePath,
-      session_id: 'anonymous', // we can improve this later with actual session id
+    // Only track once per day per client to avoid spam
+    const today = new Date().toISOString().split('T')[0]
+    const lastVisit = localStorage.getItem('last_visit_date')
+    if (lastVisit === today) return
+
+    // Track on the server to prevent multiple visits from same IP across browsers/sessions
+    const res = await fetch('/api/track-visit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ page_url: pagePath })
     })
+
+    if (res.ok) {
+      localStorage.setItem('last_visit_date', today)
+    }
   } catch (error) {
     console.error('Error tracking visit:', error)
   }

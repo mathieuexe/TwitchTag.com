@@ -44,11 +44,16 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const checkAdmin = async () => {
+    const initAuth = async () => {
       const session = await getSession()
-      if (session) setIsAdmin(true)
+      if (session && session.user) {
+        setIsAdmin(true)
+        setUsername(session.user.name || 'Admin')
+        // We do not set avatarUrl to a default, but if it exists in session we could
+        setIsJoined(true)
+      }
     }
-    checkAdmin()
+    initAuth()
   }, [])
 
   // Scroll to bottom when messages update
@@ -85,7 +90,7 @@ export default function ChatPage() {
         .from('chat_settings')
         .select('*')
         .eq('id', 1)
-        .single()
+        .maybeSingle()
       
       if (settings) setChatSettings({ is_disabled: settings.is_disabled, pinned_message: settings.pinned_message })
     }
