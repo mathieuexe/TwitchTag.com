@@ -107,27 +107,46 @@ ALTER TABLE announcements ENABLE ROW LEVEL SECURITY;
 
 -- Politiques pour generated_pseudos
 -- Tout le monde peut insérer et lire, personne ne peut modifier ou supprimer (sauf admin)
-CREATE POLICY "Enable insert for all users" ON generated_pseudos FOR INSERT WITH CHECK (true);
-CREATE POLICY "Enable read for all users" ON generated_pseudos FOR SELECT USING (true);
+DO $$ BEGIN
+    CREATE POLICY "Enable insert for all users" ON generated_pseudos FOR INSERT WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    CREATE POLICY "Enable read for all users" ON generated_pseudos FOR SELECT USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Politiques pour copied_pseudos
 -- Tout le monde peut insérer, tout le monde peut lire (pour les stats)
-CREATE POLICY "Enable insert for all users" ON copied_pseudos FOR INSERT WITH CHECK (true);
-CREATE POLICY "Enable read for all users" ON copied_pseudos FOR SELECT USING (true);
+DO $$ BEGIN
+    CREATE POLICY "Enable insert for all users" ON copied_pseudos FOR INSERT WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    CREATE POLICY "Enable read for all users" ON copied_pseudos FOR SELECT USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Politiques pour site_visits
 -- Tout le monde peut insérer, tout le monde peut lire (pour les compteurs)
-CREATE POLICY "Enable insert for all users" ON site_visits FOR INSERT WITH CHECK (true);
-CREATE POLICY "Enable read for all users" ON site_visits FOR SELECT USING (true);
+DO $$ BEGIN
+    CREATE POLICY "Enable insert for all users" ON site_visits FOR INSERT WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    CREATE POLICY "Enable read for all users" ON site_visits FOR SELECT USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Politiques pour donations
 -- Seul le système (Service Role Key) peut insérer/modifier via le webhook Stripe
 -- Tout le monde peut lire (pour afficher le total)
-CREATE POLICY "Enable read for all users" ON donations FOR SELECT USING (true);
+DO $$ BEGIN
+    CREATE POLICY "Enable read for all users" ON donations FOR SELECT USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Politiques pour announcements
 -- Tout le monde peut lire les annonces actives
-CREATE POLICY "Enable read for active announcements" ON announcements FOR SELECT USING (is_active = true);
+DO $$ BEGIN
+    CREATE POLICY "Enable read for active announcements" ON announcements FOR SELECT USING (is_active = true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Politiques pour admin_users
 -- Seuls les admins peuvent lire (bloqué pour public)
