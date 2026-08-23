@@ -76,6 +76,8 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     ip_address TEXT,
     name_color TEXT,
     is_deleted BOOLEAN DEFAULT false,
+    is_poll BOOLEAN DEFAULT false,
+    poll_data JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
