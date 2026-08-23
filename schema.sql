@@ -67,6 +67,15 @@ CREATE TABLE IF NOT EXISTS admin_users (
 );
 
 
+-- Table: chat_messages (Messages du chat en direct)
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    username TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+
 -- 2. ROW LEVEL SECURITY (RLS)
 -- ==========================================
 
@@ -107,6 +116,18 @@ ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 -- Le serveur (Service Role Key) bypassera cette règle automatiquement pour NextAuth
 
 
+-- Politiques pour chat_messages
+ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
+-- Utilisation de DO pour éviter l'erreur si la politique existe déjà
+DO $$ BEGIN
+    CREATE POLICY "Enable insert for all users" ON chat_messages FOR INSERT WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    CREATE POLICY "Enable read for all users" ON chat_messages FOR SELECT USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+
 -- 3. INITIAL DATA (SEED)
 -- ==========================================
 
@@ -122,6 +143,13 @@ VALUES (
 
 -- 4. FUNCTIONS & TRIGGERS
 -- ==========================================
+
+-- Activer le mode Temps Réel pour la table chat_messages
+-- Ceci permet à Supabase de diffuser les messages aux clients via les websockets
+BEGIN;
+  DROP PUBLICATION IF EXISTS supabase_realtime;
+  CREATE PUBLICATION supabase_realtime FOR TABLE chat_messages;
+COMMIT;
 
 -- Fonction pour mettre à jour 'updated_at'
 CREATE OR REPLACE FUNCTION update_updated_at_column()
