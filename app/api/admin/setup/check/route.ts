@@ -11,7 +11,7 @@ export async function GET() {
 
     if (error) {
       console.error('Error checking admin setup:', error)
-      return NextResponse.json({ error: 'Database error', details: error.message, hint: error.hint }, { status: 500 })
+      return NextResponse.json({ error: 'Database error', details: error.message || JSON.stringify(error), hint: error.hint }, { status: 500 })
     }
 
     return NextResponse.json({ needsSetup: count === 0 })
