@@ -126,29 +126,27 @@ export default function PseudoOptions({
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className="text-text-muted font-bold uppercase tracking-wider text-sm min-w-[120px]">
-              [LONGUEUR]
-            </span>
-            <div className="flex gap-4 flex-wrap">
-              <button
-                onClick={() => onChange({ ...options, length: 8 })}
-                className={`text-sm font-semibold transition-colors ${options.length <= 8 ? 'text-white underline underline-offset-4 decoration-twitch-purple decoration-2' : 'text-text-muted hover:text-white/80'}`}
-              >
-                Court
-              </button>
-              <button
-                onClick={() => onChange({ ...options, length: 12 })}
-                className={`text-sm font-semibold transition-colors ${options.length > 8 && options.length <= 15 ? 'text-white underline underline-offset-4 decoration-twitch-purple decoration-2' : 'text-text-muted hover:text-white/80'}`}
-              >
-                Moyen
-              </button>
-              <button
-                onClick={() => onChange({ ...options, length: 20 })}
-                className={`text-sm font-semibold transition-colors ${options.length > 15 ? 'text-white underline underline-offset-4 decoration-twitch-purple decoration-2' : 'text-text-muted hover:text-white/80'}`}
-              >
-                Long
-              </button>
+          <div className="flex flex-col gap-3 pt-2">
+            <div className="flex items-center justify-between">
+              <span className="text-text-muted font-bold uppercase tracking-wider text-sm min-w-[120px]">
+                [LONGUEUR]
+              </span>
+              <span className="text-twitch-purple font-bold">
+                {options.length} caractères
+              </span>
+            </div>
+            <div className="flex items-center gap-4 w-full">
+              <span className="text-xs text-text-muted font-bold w-4 text-right">4</span>
+              <input
+                type="range"
+                min="4"
+                max="25"
+                value={options.length}
+                onChange={(e) => onChange({ ...options, length: parseInt(e.target.value) })}
+                className="w-full h-2 bg-[#1f1f23] rounded-lg appearance-none cursor-pointer accent-twitch-purple"
+                style={{ accentColor: '#9146FF' }}
+              />
+              <span className="text-xs text-text-muted font-bold w-4 text-left">25</span>
             </div>
           </div>
         </div>
