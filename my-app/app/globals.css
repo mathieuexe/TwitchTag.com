@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #0E0E10;
+  --bg-secondary: #000000;
+  --twitch-purple: #9146FF;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: #FFFFFF;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Typography styles for that blocky Porto Rocha feel */
+h1, h2, h3, h4, h5, h6 {
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+  border-left: 1px solid #303032;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--twitch-purple);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #772CE8;
+}
+
+/* Neo-brutalist Utilities */
+@layer components {
+  .brutal-card {
+    @apply bg-bg-secondary border-2 border-[#303032] shadow-brutal transition-all duration-300;
+  }
+  
+  .brutal-card:hover {
+    @apply -translate-y-1 translate-x-[-2px] shadow-brutal-lg border-white/20;
+  }
+
+  .brutal-btn {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-bold uppercase tracking-wider bg-twitch-purple text-white border-2 border-black shadow-brutal-yellow transition-all duration-200 active:translate-y-1 active:translate-x-1 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .brutal-btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-bold uppercase tracking-wider bg-white text-black border-2 border-black shadow-brutal transition-all duration-200 active:translate-y-1 active:translate-x-1 active:shadow-none;
+  }
+
+  .brutal-input {
+    @apply w-full px-4 py-3 bg-bg-primary border-2 border-[#303032] text-white font-medium focus:outline-none focus:border-twitch-purple focus:shadow-brutal transition-all duration-200 placeholder:text-text-muted;
+  }
+
+  .marquee-container {
+    @apply relative flex overflow-x-hidden border-y-2 border-[#303032] bg-bg-secondary py-3;
+  }
+  
+  .marquee-content {
+    @apply whitespace-nowrap flex items-center gap-8 px-4;
+    animation: marquee 60s linear infinite;
+  }
+  
+  .marquee-container:hover .marquee-content {
+    animation-play-state: paused;
+  }
+}
