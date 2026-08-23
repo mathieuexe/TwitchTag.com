@@ -466,6 +466,21 @@ export default function ChatPage() {
           {messages.map((msg) => {
             const onlineUser = onlineUsers.find(u => u.username === msg.username)
             const displayAvatar = onlineUser?.avatar_url || msg.avatar_url
+            
+            let statusColor = 'bg-gray-500'
+            let statusText = 'Hors ligne'
+            if (onlineUser) {
+              statusColor = 'bg-twitch-green'
+              statusText = 'En ligne'
+              if (onlineUser.status === 'away') {
+                statusColor = 'bg-orange-500'
+                statusText = 'Absent'
+              }
+              if (onlineUser.status === 'dnd') {
+                statusColor = 'bg-red-600'
+                statusText = 'Occupé'
+              }
+            }
 
             return (
             <div key={msg.id} className="group flex flex-col">
@@ -474,16 +489,27 @@ export default function ChatPage() {
                   {new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                 </span>
                 
-                {displayAvatar && (
-                  <img 
-                    src={displayAvatar} 
-                    alt={msg.username} 
-                    className={`w-5 h-5 rounded-full object-cover self-center ml-1 bg-bg-input ${msg.is_deleted ? 'opacity-50' : ''}`}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none'
-                    }}
-                  />
-                )}
+                <div className="relative self-center ml-1 flex-shrink-0" title={statusText}>
+                  {displayAvatar ? (
+                    <img 
+                      src={displayAvatar} 
+                      alt={msg.username} 
+                      className={`w-5 h-5 rounded-full object-cover bg-bg-input ${msg.is_deleted ? 'opacity-50' : ''}`}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/bottts/svg?seed=${msg.username}`
+                      }}
+                    />
+                  ) : (
+                    <div className={`w-5 h-5 rounded-full bg-bg-input flex items-center justify-center ${msg.is_deleted ? 'opacity-50' : ''}`}>
+                      <User className="w-3 h-3 text-text-muted" />
+                    </div>
+                  )}
+                  {onlineUser && (
+                    <div 
+                      className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-bg-secondary ${statusColor}`}
+                    ></div>
+                  )}
+                </div>
                 
                 <span 
                   className={`font-bold text-sm ${msg.is_deleted ? 'opacity-50' : ''}`}
