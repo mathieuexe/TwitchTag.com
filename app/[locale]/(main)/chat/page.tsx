@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabaseClient } from '@/lib/supabase/client'
-import { Send, Users, User, MessageSquare, Shield, Trash2, Ban, Lock, Unlock, Pin, XCircle, BarChart2, Plus, Minus, Search } from 'lucide-react'
+import { Send, Users, User, MessageSquare, Shield, Trash2, Ban, Lock, Unlock, Pin, XCircle, BarChart2, Plus, Minus, Search, Reply } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { getSession } from 'next-auth/react'
 
@@ -19,6 +19,11 @@ interface ChatMessage {
     question: string
     options: { text: string, votes: number }[]
     voted_ips: string[]
+  }
+  reply_to?: {
+    id: string
+    username: string
+    content: string
   }
 }
 
@@ -75,6 +80,8 @@ export default function ChatPage() {
     is_disabled: false,
     pinned_message: null
   })
+  
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -268,12 +275,24 @@ export default function ChatPage() {
       const res = await fetch('/api/chat/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, avatar_url: avatarUrl || null, content, name_color: nameColor })
+        body: JSON.stringify({ 
+          username, 
+          avatar_url: avatarUrl || null, 
+          content, 
+          name_color: nameColor,
+          reply_to: replyingTo ? {
+            id: replyingTo.id,
+            username: replyingTo.username,
+            content: replyingTo.is_poll && replyingTo.poll_data ? `Sondage: ${replyingTo.poll_data.question}` : replyingTo.content
+          } : null
+        })
       })
       
       const data = await res.json()
       if (!res.ok) {
         alert(data.error || "Erreur lors de l'envoi")
+      } else {
+        setReplyingTo(null)
       }
     } catch (err) {
       console.error(err)
@@ -361,9 +380,23 @@ export default function ChatPage() {
       const res = await fetch('/api/chat/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, avatar_url: avatarUrl || null, content: gifUrl, name_color: nameColor })
+        body: JSON.stringify({ 
+          username, 
+          avatar_url: avatarUrl || null, 
+          content: gifUrl, 
+          name_color: nameColor,
+          reply_to: replyingTo ? {
+            id: replyingTo.id,
+            username: replyingTo.username,
+            content: replyingTo.is_poll && replyingTo.poll_data ? `Sondage: ${replyingTo.poll_data.question}` : replyingTo.content
+          } : null
+        })
       })
-      if (!res.ok) alert("Erreur lors de l'envoi du GIF")
+      if (!res.ok) {
+        alert("Erreur lors de l'envoi du GIF")
+      } else {
+        setReplyingTo(null)
+      }
     } catch (err) {
       console.error(err)
     }
@@ -649,6 +682,16 @@ export default function ChatPage() {
 
             return (
             <div key={msg.id} className="group flex flex-col">
+              
+              {/* Reply Reference UI */}
+              {msg.reply_to && (
+                <div className="flex items-center gap-2 text-xs text-text-muted mb-1 ml-8 opacity-80">
+                  <Reply className="w-3 h-3 scale-x-[-1]" />
+                  <span>En réponse à <span className="font-semibold text-white/70">@{msg.reply_to.username}</span> : </span>
+                  <span className="truncate max-w-[200px] sm:max-w-xs">{msg.reply_to.content.match(/giphy\.com\/media/) ? '[GIF]' : msg.reply_to.content}</span>
+                </div>
+              )}
+
               <div className="flex items-baseline gap-2">
                 <span className="text-xs text-text-muted">
                   {new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
@@ -719,26 +762,37 @@ export default function ChatPage() {
                   renderMessageContent(msg.content, msg.is_deleted)
                 )}
                 
-                {/* Admin Message Controls */}
-                {(isAdmin && !msg.is_deleted) && (
+                {/* Message Controls (Reply + Admin) */}
+                {(!msg.is_deleted) && (
                   <div className="hidden group-hover:flex items-center gap-1 bg-bg-primary rounded px-1 ml-2">
                     <button 
-                      onClick={() => adminAction('delete_message', { id: msg.id })}
-                      className="p-1 text-text-muted hover:text-red-400 transition-colors"
-                      title="Supprimer le message"
+                      onClick={() => setReplyingTo(msg)}
+                      className="p-1 text-text-muted hover:text-white transition-colors"
+                      title="Répondre"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Reply className="w-3.5 h-3.5" />
                     </button>
-                    <button 
-                      onClick={() => {
-                        const reason = prompt(`Raison du ban pour ${msg.username} ?`)
-                        if(reason !== null) adminAction('ban_user', { message_id: msg.id, reason })
-                      }}
-                      className="p-1 text-text-muted hover:text-red-400 transition-colors"
-                      title="Bannir l'utilisateur (IP)"
-                    >
-                      <Ban className="w-3.5 h-3.5" />
-                    </button>
+                    {isAdmin && (
+                      <>
+                        <button 
+                          onClick={() => adminAction('delete_message', { id: msg.id })}
+                          className="p-1 text-text-muted hover:text-red-400 transition-colors"
+                          title="Supprimer le message"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button 
+                          onClick={() => {
+                            const reason = prompt(`Raison du ban pour ${msg.username} ?`)
+                            if(reason !== null) adminAction('ban_user', { message_id: msg.id, reason })
+                          }}
+                          className="p-1 text-text-muted hover:text-red-400 transition-colors"
+                          title="Bannir l'utilisateur (IP)"
+                        >
+                          <Ban className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -748,8 +802,26 @@ export default function ChatPage() {
         </div>
 
         {/* Input Area */}
-        <div className="p-4 border-t border-white/5 bg-bg-primary/50">
+        <div className="p-4 border-t border-white/5 bg-bg-primary/50 flex flex-col">
           
+          {replyingTo && (
+            <div className="flex items-center justify-between bg-white/5 border-l-2 border-twitch-purple p-2 mb-3 rounded-r-md">
+              <div className="flex flex-col overflow-hidden text-sm">
+                <span className="text-twitch-purple font-bold text-xs">En réponse à @{replyingTo.username}</span>
+                <span className="text-text-muted truncate">
+                  {replyingTo.is_poll && replyingTo.poll_data 
+                    ? `Sondage: ${replyingTo.poll_data.question}` 
+                    : replyingTo.content.match(/giphy\.com\/media/) 
+                      ? '[GIF]' 
+                      : replyingTo.content}
+                </span>
+              </div>
+              <button onClick={() => setReplyingTo(null)} className="text-text-muted hover:text-white p-1">
+                <XCircle className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           {/* Quick Emojis */}
           <div className={`flex gap-2 mb-3 overflow-x-auto hide-scrollbar pb-1 ${(chatSettings.is_disabled && !isAdmin) ? 'opacity-50 pointer-events-none' : ''}`}>
             {QUICK_EMOJIS.map((emoji) => (

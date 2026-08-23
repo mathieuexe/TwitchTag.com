@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     is_deleted BOOLEAN DEFAULT false,
     is_poll BOOLEAN DEFAULT false,
     poll_data JSONB,
+    reply_to JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

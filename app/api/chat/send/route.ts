@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth'
 
 export async function POST(req: NextRequest) {
   try {
-    const { username, avatar_url, content, name_color } = await req.json()
+    const { username, avatar_url, content, name_color, reply_to } = await req.json()
     
     // Get client IP for banning system
     const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
@@ -55,7 +55,8 @@ export async function POST(req: NextRequest) {
       avatar_url: avatar_url || null,
       content,
       ip_address: ip,
-      name_color: name_color || null
+      name_color: name_color || null,
+      reply_to: reply_to || null
     } as any).select().single()
 
     if (error) {
