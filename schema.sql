@@ -181,7 +181,7 @@ INSERT INTO chat_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
 -- Activer le mode Temps Réel
 BEGIN;
   DROP PUBLICATION IF EXISTS supabase_realtime;
-  CREATE PUBLICATION supabase_realtime FOR TABLE chat_messages, chat_settings;
+  CREATE PUBLICATION supabase_realtime FOR TABLE chat_messages, chat_settings, announcements;
 COMMIT;
 
 -- Fonction pour mettre à jour 'updated_at'
