@@ -1,14 +1,20 @@
 import { NextResponse } from 'next/server'
-import { supabaseServer } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 export const fetchCache = 'force-no-store'
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: { persistSession: false }
+})
+
 export async function GET() {
   try {
     // Get total pseudos
-    const { count: totalPseudos, error: pseudoError } = await supabaseServer
+    const { count: totalPseudos, error: pseudoError } = await supabase
       .from('generated_pseudos')
       .select('*', { count: 'exact', head: true })
 
@@ -19,7 +25,7 @@ export async function GET() {
     startOfMonth.setDate(1)
     startOfMonth.setHours(0, 0, 0, 0)
 
-    const { count: monthlyPseudos, error: monthlyError } = await supabaseServer
+    const { count: monthlyPseudos, error: monthlyError } = await supabase
       .from('generated_pseudos')
       .select('*', { count: 'exact', head: true })
       .gte('created_at', startOfMonth.toISOString())
@@ -27,14 +33,14 @@ export async function GET() {
     if (monthlyError) throw monthlyError
 
     // Get total visits
-    const { count: totalVisits, error: visitsError } = await supabaseServer
+    const { count: totalVisits, error: visitsError } = await supabase
       .from('site_visits')
       .select('*', { count: 'exact', head: true })
 
     if (visitsError) throw visitsError
 
     // Get monthly visits
-    const { count: monthlyVisits, error: monthlyVisitsError } = await supabaseServer
+    const { count: monthlyVisits, error: monthlyVisitsError } = await supabase
       .from('site_visits')
       .select('*', { count: 'exact', head: true })
       .gte('created_at', startOfMonth.toISOString())

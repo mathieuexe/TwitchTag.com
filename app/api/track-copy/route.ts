@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseServer } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: { persistSession: false }
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Try to find the generated pseudo id
-    const { data: generatedPseudo } = await (supabaseServer
+    const { data: generatedPseudo } = await (supabase
       .from('generated_pseudos') as any)
       .select('id')
       .eq('pseudo', pseudo)
@@ -20,7 +26,7 @@ export async function POST(request: NextRequest) {
       .limit(1)
       .single()
 
-    const { error } = await supabaseServer.from('copied_pseudos').insert({
+    const { error } = await supabase.from('copied_pseudos').insert({
       pseudo,
       generated_pseudo_id: generatedPseudo?.id || null,
     } as any)

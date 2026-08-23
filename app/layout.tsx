@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Space_Grotesk, Inter, Space_Mono } from 'next/font/google'
 import './globals.css'
+import NextAuthProvider from '@/components/providers/NextAuthProvider'
 
 // We use Space Grotesk as it closely resembles the blocky, geometric nature of Twitch's Roobert font
 const spaceGrotesk = Space_Grotesk({ 
@@ -37,7 +38,9 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`${spaceGrotesk.variable} ${inter.variable} ${spaceMono.variable}`}>
       <body className="min-h-screen bg-bg-primary font-sans antialiased selection:bg-twitch-yellow selection:text-black">
-        {children}
+        <NextAuthProvider>
+          {children}
+        </NextAuthProvider>
       </body>
     </html>
   )

@@ -2,11 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Twitch, Menu, X, MessageSquare } from 'lucide-react'
-import { useState } from 'react'
+import { Twitch, Menu, X, MessageSquare, LogIn, LayoutDashboard } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 
 export default function Header() {
   const pathname = usePathname()
+  const { data: session } = useSession()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const navItems = [
@@ -51,16 +53,16 @@ export default function Header() {
       </div>
 
       {/* Sub Navigation (Dark Bar) */}
-      <div className="bg-bg-secondary border-b border-white/10 px-4 sm:px-6 lg:px-8 h-12 flex items-center overflow-x-auto hide-scrollbar">
-        <nav className="flex items-center gap-6 text-sm font-semibold tracking-wide">
+      <div className="bg-bg-secondary border-b border-white/10 px-4 sm:px-6 lg:px-8 h-12 flex items-center justify-between overflow-x-auto hide-scrollbar">
+        <nav className="flex items-center gap-6 text-sm font-semibold tracking-wide h-full">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`whitespace-nowrap transition-colors uppercase flex items-center gap-1.5 ${
+              className={`whitespace-nowrap transition-colors uppercase flex items-center gap-1.5 h-full ${
                 isActive(item.href)
-                  ? 'text-twitch-purple'
-                  : 'text-text-primary hover:text-twitch-purple'
+                  ? 'text-twitch-purple border-b-2 border-twitch-purple'
+                  : 'text-text-primary hover:text-twitch-purple border-b-2 border-transparent'
               }`}
             >
               {item.href === '/chat' && <MessageSquare className="w-4 h-4" />}
@@ -68,6 +70,27 @@ export default function Header() {
             </Link>
           ))}
         </nav>
+
+        {/* Auth Link (Desktop) */}
+        <div className="hidden md:flex items-center">
+          {session ? (
+            <Link
+              href="/admin"
+              className="flex items-center gap-1.5 text-sm font-bold text-twitch-purple hover:text-white transition-colors bg-twitch-purple/10 px-3 py-1.5 rounded-md"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              ADMIN
+            </Link>
+          ) : (
+            <Link
+              href="/admin/login"
+              className="flex items-center gap-1.5 text-sm font-semibold text-text-muted hover:text-white transition-colors"
+            >
+              <LogIn className="w-4 h-4" />
+              Se connecter
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Mobile Menu */}
@@ -87,6 +110,27 @@ export default function Header() {
                 [{item.label}]
               </Link>
             ))}
+            
+            {/* Auth Link (Mobile) */}
+            {session ? (
+              <Link
+                href="/admin"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-6 py-4 text-sm font-bold uppercase tracking-wider border-b border-white/5 hover:bg-white/5 flex items-center gap-2 text-twitch-purple"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Tableau de bord Admin
+              </Link>
+            ) : (
+              <Link
+                href="/admin/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-6 py-4 text-sm font-semibold uppercase tracking-wider border-b border-white/5 hover:bg-white/5 flex items-center gap-2 text-text-muted"
+              >
+                <LogIn className="w-4 h-4" />
+                Se connecter
+              </Link>
+            )}
           </nav>
         </div>
       )}

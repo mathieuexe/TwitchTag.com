@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generatePseudos } from '@/lib/utils/pseudo-generator'
-import { supabaseServer } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: { persistSession: false }
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,7 +34,7 @@ export async function POST(request: NextRequest) {
       easy_to_remember: easyToRemember || true,
     }))
 
-    const { error } = await supabaseServer.from('generated_pseudos').insert(inserts as any)
+    const { error } = await supabase.from('generated_pseudos').insert(inserts as any)
 
     if (error) {
       console.error('Error storing generated pseudos:', error)
