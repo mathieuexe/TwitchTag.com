@@ -8,12 +8,14 @@ import { motion } from 'framer-motion'
 interface ChatMessage {
   id: string
   username: string
+  avatar_url?: string
   content: string
   created_at: string
 }
 
 interface OnlineUser {
   username: string
+  avatar_url?: string
   online_at: string
 }
 
@@ -22,7 +24,9 @@ const QUICK_EMOJIS = ['😂', '❤️', '🔥', 'GG', '🎮', '💀', '👀']
 export default function ChatPage() {
   const [isJoined, setIsJoined] = useState(false)
   const [usernameInput, setUsernameInput] = useState('')
+  const [avatarUrlInput, setAvatarUrlInput] = useState('')
   const [username, setUsername] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState('')
   
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
@@ -42,6 +46,7 @@ export default function ChatPage() {
     if (!usernameInput.trim()) return
     
     setUsername(usernameInput.trim())
+    setAvatarUrl(avatarUrlInput.trim())
     setIsJoined(true)
   }
 
@@ -73,7 +78,11 @@ export default function ChatPage() {
         for (const id in presenceState) {
           // get the first presence instance for each user id
           const presence = presenceState[id][0] as any
-          users.push({ username: presence.username, online_at: presence.online_at })
+          users.push({ 
+            username: presence.username, 
+            avatar_url: presence.avatar_url,
+            online_at: presence.online_at 
+          })
         }
         // sort by online_at
         users.sort((a, b) => new Date(b.online_at).getTime() - new Date(a.online_at).getTime())
@@ -86,6 +95,7 @@ export default function ChatPage() {
         if (status === 'SUBSCRIBED') {
           await chatChannel.track({
             username: username,
+            avatar_url: avatarUrl,
             online_at: new Date().toISOString(),
           })
         }
@@ -109,6 +119,7 @@ export default function ChatPage() {
     
     await supabaseClient.from('chat_messages').insert({
       username,
+      avatar_url: avatarUrl || null,
       content
     })
   }
@@ -140,7 +151,7 @@ export default function ChatPage() {
           <form onSubmit={handleJoin} className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-text-secondary uppercase tracking-wider mb-2">
-                Ton Pseudo
+                Ton Pseudo *
               </label>
               <input
                 type="text"
@@ -152,7 +163,22 @@ export default function ChatPage() {
                 required
               />
             </div>
-            <button type="submit" className="w-full twitch-btn py-3 text-lg">
+            
+            <div>
+              <label className="block text-sm font-semibold text-text-secondary uppercase tracking-wider mb-2">
+                URL d'Avatar (Optionnel)
+              </label>
+              <input
+                type="url"
+                value={avatarUrlInput}
+                onChange={(e) => setAvatarUrlInput(e.target.value)}
+                className="twitch-input"
+                placeholder="https://..."
+              />
+              <p className="text-xs text-text-muted mt-2">Lien vers une image PNG, JPG ou GIF.</p>
+            </div>
+
+            <button type="submit" className="w-full twitch-btn py-3 text-lg mt-4">
               Rejoindre le chat
             </button>
           </form>
@@ -175,9 +201,20 @@ export default function ChatPage() {
         <div className="flex-1 overflow-y-auto p-4 space-y-3 hide-scrollbar">
           {onlineUsers.map((u, i) => (
             <div key={i} className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-bg-input flex items-center justify-center flex-shrink-0">
-                <User className="w-4 h-4 text-text-muted" />
-              </div>
+              {u.avatar_url ? (
+                <img 
+                  src={u.avatar_url} 
+                  alt={u.username} 
+                  className="w-8 h-8 rounded-full object-cover flex-shrink-0 bg-bg-input"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/bottts/svg?seed=${u.username}`
+                  }}
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-bg-input flex items-center justify-center flex-shrink-0">
+                  <User className="w-4 h-4 text-text-muted" />
+                </div>
+              )}
               <span className={`text-sm font-semibold truncate ${u.username === username ? 'text-twitch-purple' : 'text-text-primary'}`}>
                 {u.username}
               </span>
@@ -203,6 +240,18 @@ export default function ChatPage() {
                 <span className="text-xs text-text-muted">
                   {new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                 </span>
+                
+                {msg.avatar_url && (
+                  <img 
+                    src={msg.avatar_url} 
+                    alt={msg.username} 
+                    className="w-5 h-5 rounded-full object-cover self-center ml-1"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none'
+                    }}
+                  />
+                )}
+                
                 <span className={`font-bold text-sm ${msg.username === username ? 'text-twitch-purple' : 'text-white'}`}>
                   {msg.username}
                 </span>

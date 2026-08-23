@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Check, X, Loader2, Shield, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react'
-import Header from '@/components/layout/Header'
 
 interface CheckResult {
   username: string
@@ -59,13 +58,10 @@ export default function VerifierPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary">
-      <Header />
-
-      <main className="pt-24 pb-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="text-center mb-16">
+    <div className="flex-1 flex flex-col pt-8 sm:pt-16 pb-24">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="text-center mb-16">
             <div className="inline-flex items-center justify-center w-24 h-24 bg-twitch-cyan border-4 border-black mb-8 shadow-brutal transform -rotate-3">
               <Shield className="w-12 h-12 text-black" />
             </div>
@@ -78,7 +74,7 @@ export default function VerifierPage() {
           </div>
 
           {/* Search Form */}
-          <div className="brutal-card p-8 bg-twitch-purple mb-12">
+          <div className="twitch-card p-8 bg-bg-secondary mb-12">
             <form onSubmit={handleCheck} className="relative flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -89,17 +85,17 @@ export default function VerifierPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Tape un pseudo ici..."
-                  className="w-full pl-14 pr-4 py-4 bg-white border-4 border-black text-black font-bold text-xl uppercase placeholder:text-black/40 focus:outline-none focus:shadow-brutal-sm transition-all"
+                  className="twitch-input pl-12"
                   disabled={isChecking}
                 />
               </div>
               <button
                 type="submit"
                 disabled={!username.trim() || isChecking}
-                className="brutal-btn bg-twitch-yellow text-black border-4 py-4 px-8 text-xl shadow-brutal-white sm:w-auto w-full"
+                className="twitch-btn py-3 px-8 sm:w-auto w-full"
               >
                 {isChecking ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto" />
                 ) : (
                   'Vérifier'
                 )}
@@ -114,31 +110,33 @@ export default function VerifierPage() {
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -20 }}
-                className={`brutal-card p-8 mb-12 ${
+                className={`twitch-card p-8 mb-12 border ${
                   result.error
-                    ? 'bg-[#303032]'
+                    ? 'border-white/10'
                     : result.available
-                    ? 'bg-twitch-green'
-                    : 'bg-twitch-pink'
+                    ? 'border-twitch-green bg-twitch-green/5'
+                    : 'border-twitch-red bg-twitch-red/5'
                 }`}
               >
                 <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
-                  <div className="w-20 h-20 bg-white border-4 border-black flex items-center justify-center shadow-brutal-sm shrink-0">
+                  <div className={`w-16 h-16 rounded-xl flex items-center justify-center shrink-0 ${
+                     result.error ? 'bg-white/10 text-white' : result.available ? 'bg-twitch-green/20 text-twitch-green' : 'bg-twitch-red/20 text-twitch-red'
+                  }`}>
                     {result.error ? (
-                      <AlertCircle className="w-10 h-10 text-black" />
+                      <AlertCircle className="w-8 h-8" />
                     ) : result.available ? (
-                      <Check className="w-10 h-10 text-black" />
+                      <Check className="w-8 h-8" />
                     ) : (
-                      <X className="w-10 h-10 text-black" />
+                      <X className="w-8 h-8" />
                     )}
                   </div>
                   
                   <div className="flex-1">
-                    <h3 className="text-3xl font-black text-black uppercase tracking-tight mb-2">
+                    <h3 className="text-2xl font-bold text-white uppercase tracking-tight mb-1">
                       {result.error ? 'Erreur' : result.available ? 'C\'est dispo !' : 'Déjà pris'}
                     </h3>
-                    <p className="text-black/80 font-bold text-lg">
-                      <span className="bg-black text-white px-2 py-1 mr-2">{result.username}</span>
+                    <p className="text-text-secondary font-medium">
+                      <span className="text-white font-bold mr-2">[{result.username}]</span>
                       {result.error
                         ? result.error
                         : result.available
@@ -152,9 +150,9 @@ export default function VerifierPage() {
                       href={`https://twitch.tv/${result.username}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="brutal-btn-secondary bg-white text-black"
+                      className="twitch-btn-secondary"
                     >
-                      <ExternalLink className="w-5 h-5" />
+                      <ExternalLink className="w-4 h-4 mr-2" />
                       Voir
                     </a>
                   )}
@@ -166,35 +164,34 @@ export default function VerifierPage() {
           {/* Recent Checks */}
           {recentChecks.length > 0 && (
             <div className="mt-16">
-              <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-6 flex items-center gap-3">
-                <RefreshCw className="w-6 h-6 text-twitch-yellow" />
+              <h3 className="text-xl font-bold text-white uppercase tracking-wider mb-6 flex items-center gap-3">
+                <RefreshCw className="w-5 h-5 text-twitch-purple" />
                 Historique récent
               </h3>
-              <div className="grid gap-4">
+              <div className="grid gap-3">
                 {recentChecks.map((check, index) => (
                   <div
                     key={`${check.username}-${index}`}
-                    className="brutal-card p-4 bg-bg-secondary flex items-center justify-between hover:border-twitch-cyan"
+                    className="twitch-card p-4 bg-bg-secondary flex items-center justify-between hover:bg-white/5 transition-colors"
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`w-4 h-4 border-2 border-black ${
-                        check.available ? 'bg-twitch-green shadow-brutal-sm' : 'bg-twitch-pink shadow-brutal-sm'
+                      <div className={`w-3 h-3 rounded-full ${
+                        check.available ? 'bg-twitch-green' : 'bg-twitch-red'
                       }`} />
-                      <span className="font-bold text-xl text-white uppercase">{check.username}</span>
+                      <span className="font-semibold text-lg text-white">{check.username}</span>
                     </div>
                     <button
                       onClick={() => handleCheckAgain(check.username)}
-                      className="px-4 py-2 bg-white text-black font-bold uppercase text-sm border-2 border-black shadow-brutal-sm hover:-translate-y-1 hover:shadow-brutal transition-all"
+                      className="text-sm font-semibold text-text-muted hover:text-white transition-colors"
                     >
-                      Revérifier
+                      [REVÉRIFIER]
                     </button>
                   </div>
                 ))}
               </div>
             </div>
           )}
-        </div>
-      </main>
+      </div>
     </div>
   )
 }
