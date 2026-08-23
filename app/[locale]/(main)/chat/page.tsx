@@ -343,8 +343,15 @@ export default function ChatPage() {
         <div className="flex-1 overflow-y-auto p-4 space-y-3 hide-scrollbar">
           {onlineUsers.map((u, i) => {
             let statusColor = 'bg-twitch-green'
-            if (u.status === 'away') statusColor = 'bg-orange-500'
-            if (u.status === 'dnd') statusColor = 'bg-red-600'
+            let statusText = 'En ligne'
+            if (u.status === 'away') {
+              statusColor = 'bg-orange-500'
+              statusText = 'Absent'
+            }
+            if (u.status === 'dnd') {
+              statusColor = 'bg-red-600'
+              statusText = 'Occupé'
+            }
 
             return (
             <div 
@@ -374,7 +381,10 @@ export default function ChatPage() {
                     <User className="w-4 h-4 text-text-muted" />
                   </div>
                 )}
-                <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-bg-secondary ${statusColor}`}></div>
+                <div 
+                  className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-bg-secondary ${statusColor}`}
+                  title={statusText}
+                ></div>
               </div>
               <div className="flex flex-col overflow-hidden">
                 <span 
