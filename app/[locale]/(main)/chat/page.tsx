@@ -50,12 +50,19 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const savedAvatar = localStorage.getItem('chat_avatar_url')
+    const savedStatus = localStorage.getItem('chat_user_status') as 'online' | 'away' | 'dnd'
+    if (savedAvatar) {
+      setAvatarUrl(savedAvatar)
+      setAvatarUrlInput(savedAvatar)
+    }
+    if (savedStatus) setUserStatus(savedStatus)
+
     const initAuth = async () => {
       const session = await getSession()
       if (session && session.user) {
         setIsAdmin(true)
         setUsername(session.user.name || 'Admin')
-        // We do not set avatarUrl to a default, but if it exists in session we could
         setIsJoined(true)
       }
     }
@@ -73,7 +80,9 @@ export default function ChatPage() {
     if (!usernameInput.trim()) return
     
     setUsername(usernameInput.trim())
-    setAvatarUrl(avatarUrlInput.trim())
+    const finalAvatar = avatarUrlInput.trim()
+    setAvatarUrl(finalAvatar)
+    if (finalAvatar) localStorage.setItem('chat_avatar_url', finalAvatar)
     setIsJoined(true)
   }
 
@@ -161,6 +170,7 @@ export default function ChatPage() {
   const updateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     setAvatarUrl(editAvatarUrl)
+    localStorage.setItem('chat_avatar_url', editAvatarUrl)
     setShowProfileModal(false)
     if (channel) {
       await channel.track({
@@ -175,6 +185,7 @@ export default function ChatPage() {
 
   const updateStatus = async (newStatus: 'online' | 'away' | 'dnd') => {
     setUserStatus(newStatus)
+    localStorage.setItem('chat_user_status', newStatus)
     if (channel) {
       await channel.track({
         username: username,
