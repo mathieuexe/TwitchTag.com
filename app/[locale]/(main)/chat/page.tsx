@@ -416,18 +416,22 @@ export default function ChatPage() {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 hide-scrollbar">
-          {messages.map((msg) => (
+          {messages.map((msg) => {
+            const onlineUser = onlineUsers.find(u => u.username === msg.username)
+            const displayAvatar = onlineUser?.avatar_url || msg.avatar_url
+
+            return (
             <div key={msg.id} className="group flex flex-col">
               <div className="flex items-baseline gap-2">
                 <span className="text-xs text-text-muted">
                   {new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                 </span>
                 
-                {msg.avatar_url && (
+                {displayAvatar && (
                   <img 
-                    src={msg.avatar_url} 
+                    src={displayAvatar} 
                     alt={msg.username} 
-                    className="w-5 h-5 rounded-full object-cover self-center ml-1"
+                    className="w-5 h-5 rounded-full object-cover self-center ml-1 bg-bg-input"
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = 'none'
                     }}
@@ -465,7 +469,7 @@ export default function ChatPage() {
                 )}
               </div>
             </div>
-          ))}
+          )})}
           <div ref={messagesEndRef} />
         </div>
 

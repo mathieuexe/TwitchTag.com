@@ -23,13 +23,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'L\'utilisation du mot "admin" dans le pseudo est strictement réservée.' }, { status: 403 })
       }
       
-      const { data: adminMatch } = await supabaseServer
+      const { data: adminMatch, error: adminErr } = await supabaseServer
         .from('admin_users')
         .select('name')
         .ilike('name', username)
-        .maybeSingle()
+        .limit(1)
         
-      if (adminMatch) {
+      if (adminMatch && adminMatch.length > 0) {
         return NextResponse.json({ error: 'Ce pseudo appartient déjà à un administrateur.' }, { status: 403 })
       }
     }
@@ -44,9 +44,9 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Check if user is banned
-    const { data: ban } = await supabaseServer.from('chat_bans').select('*').eq('ip_address', ip).maybeSingle()
-    if (ban) {
-      return NextResponse.json({ error: `Vous êtes banni du chat. Raison : ${(ban as any).reason || 'Aucune'}` }, { status: 403 })
+    const { data: ban } = await supabaseServer.from('chat_bans').select('*').eq('ip_address', ip).limit(1)
+    if (ban && ban.length > 0) {
+      return NextResponse.json({ error: `Vous êtes banni du chat. Raison : ${(ban[0] as any).reason || 'Aucune'}` }, { status: 403 })
     }
 
     // 3. Insert message securely via backend
@@ -57,11 +57,14 @@ export async function POST(req: NextRequest) {
       ip_address: ip
     } as any).select().single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase Insert Error:', error)
+      return NextResponse.json({ error: error.message || 'Erreur BDD' }, { status: 500 })
+    }
 
     return NextResponse.json({ success: true, message: data })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error sending message:', error)
-    return NextResponse.json({ error: 'Erreur interne lors de l\'envoi' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Erreur interne lors de l\'envoi' }, { status: 500 })
   }
 }
