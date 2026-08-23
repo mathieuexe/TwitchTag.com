@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabaseClient } from '@/lib/supabase/client'
-import { Send, Users, User, MessageSquare, Shield, Trash2, Ban, Lock, Unlock, Pin, XCircle, BarChart2, Plus, Minus, Search, Reply } from 'lucide-react'
+import { Send, Users, User, MessageSquare, Shield, Trash2, Ban, Lock, Unlock, Pin, XCircle, BarChart2, Plus, Minus, Search, Reply, LogOut } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { getSession } from 'next-auth/react'
 
@@ -86,9 +86,16 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const savedUsername = localStorage.getItem('chat_username')
     const savedAvatar = localStorage.getItem('chat_avatar_url')
     const savedStatus = localStorage.getItem('chat_user_status') as 'online' | 'away' | 'dnd'
     const savedColor = localStorage.getItem('chat_name_color')
+    
+    if (savedUsername) {
+      setUsername(savedUsername)
+      setUsernameInput(savedUsername)
+      setIsJoined(true)
+    }
     if (savedAvatar) {
       setAvatarUrl(savedAvatar)
       setAvatarUrlInput(savedAvatar)
@@ -112,6 +119,27 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  const handleLeaveChat = async () => {
+    // Supprimer les infos de session
+    localStorage.removeItem('chat_username')
+    localStorage.removeItem('chat_avatar_url')
+    localStorage.removeItem('chat_user_status')
+    localStorage.removeItem('chat_name_color')
+    
+    // Déconnexion de Supabase Presence
+    if (channel) {
+      await channel.unsubscribe()
+      setChannel(null)
+    }
+    
+    // Réinitialiser les states
+    setIsJoined(false)
+    setUsername('')
+    setUsernameInput('')
+    setAvatarUrl('')
+    setAvatarUrlInput('')
+  }
+
   // Join Chat
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -126,6 +154,8 @@ export default function ChatPage() {
     }
 
     setUsername(usernameInput.trim())
+    localStorage.setItem('chat_username', usernameInput.trim())
+    
     const finalAvatar = avatarUrlInput.trim()
     setAvatarUrl(finalAvatar)
     if (finalAvatar) localStorage.setItem('chat_avatar_url', finalAvatar)
@@ -136,7 +166,9 @@ export default function ChatPage() {
     const randomNum = Math.floor(Math.random() * 1000) + 1
     const anonName = `anonyme-${randomNum}`
     setUsername(anonName)
+    localStorage.setItem('chat_username', anonName)
     setAvatarUrl('')
+    localStorage.removeItem('chat_avatar_url') // Clear avatar for anonymous
     setIsJoined(true)
   }
 
@@ -632,6 +664,16 @@ export default function ChatPage() {
             </button>
           </div>
         )}
+
+        {/* Quitter le chat (User & Admin) */}
+        <div className="p-4 border-t border-white/5 bg-bg-primary/10">
+          <button 
+            onClick={handleLeaveChat}
+            className="flex items-center justify-center gap-2 text-xs font-bold px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-md transition-colors w-full"
+          >
+            <LogOut className="w-4 h-4" /> Quitter le chat
+          </button>
+        </div>
       </div>
 
       {/* Main Chat Area */}
