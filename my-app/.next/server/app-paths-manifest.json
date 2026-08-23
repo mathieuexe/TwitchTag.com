@@ -1,6 +1,1 @@
-{
-  "/(main)/page": "app/(main)/page.js",
-  "/api/stats/route": "app/api/stats/route.js",
-  "/admin/settings/page": "app/admin/settings/page.js",
-  "/admin/page": "app/admin/page.js"
-}
+{}
