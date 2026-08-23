@@ -26,9 +26,11 @@ export default function AdminLogin() {
 
       if (res?.error) {
         setError('Email ou mot de passe incorrect')
-      } else {
+      } else if (res?.ok) {
         router.push('/admin')
         router.refresh()
+      } else {
+        setError('Erreur de configuration du serveur')
       }
     } catch (err) {
       setError('Une erreur est survenue')
